@@ -1,0 +1,677 @@
+/* ═══════════════════════════════════════════════════════════
+   ANALOG IMPERIUM — SIDE PANEL v1.0
+   Analog Terminal UI fused with Imperium 3D sigil
+   ═══════════════════════════════════════════════════════════ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #050e05;
+}
+
+/* ── PRELOADING SCREEN (Imperium style) ── */
+#ai-loading {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #00ff66;
+  font-size: 11px;
+  letter-spacing: 3px;
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+  z-index: 999;
+  background: #021b15;
+  transition: opacity 0.8s ease;
+}
+
+#ai-loading.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ai-loading-bar-wrap {
+  width: 120px;
+  height: 2px;
+  background: #001a0a;
+  margin-top: 16px;
+  overflow: hidden;
+}
+
+.ai-loading-bar {
+  height: 100%;
+  background: #00ff66;
+  width: 0%;
+  animation: ai-loadprogress 1.5s ease forwards;
+  box-shadow: 0 0 8px #00ff66;
+}
+
+@keyframes ai-loadprogress {
+  to { width: 100%; }
+}
+
+/* ── ROOT ── */
+#cp-root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(160deg, #1a1a2e 0%, #0d0d1a 60%, #050e05 100%);
+  position: relative;
+  font-family: 'Courier New', monospace;
+  /* Convergence filter lives here permanently */
+  filter: url('#crt-convergence');
+}
+
+/* Boot slide-in on content children, NOT on #cp-root (would break the filter) */
+.cp-bezel-top,
+.cp-panel-body {
+  animation: panel-boot 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Phosphor startup flash overlay */
+.cp-phosphor-flash {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 255, 65, 0.18);
+  z-index: 200;
+  pointer-events: none;
+  animation: phosphor-flash 0.9s ease-out both;
+}
+
+/* ── CRT OVERLAYS ── */
+.cp-crt-scanlines,
+.cp-crt-vignette,
+.cp-crt-flicker {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.cp-crt-scanlines {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 3px,
+    rgba(0, 0, 0, 0.18) 3px,
+    rgba(0, 0, 0, 0.18) 4px
+  );
+}
+
+.cp-crt-vignette {
+  background: radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0, 0, 0, 0.65) 100%);
+}
+
+.cp-crt-flicker {
+  background: rgba(0, 255, 65, 0.015);
+  animation: crt-flicker 0.12s infinite;
+}
+
+/* ── BEZEL / TITLE BAR ── */
+.cp-bezel-top {
+  flex-shrink: 0;
+  height: 28px;
+  background: linear-gradient(180deg, #1e1e38 0%, #12122a 100%);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 6px;
+  border-bottom: 1px solid #0d0d1a;
+  position: relative;
+  z-index: 1;
+}
+
+.cp-bezel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: cp-dot-pulse 2s ease-in-out infinite;
+}
+
+.cp-bezel-dot--red {
+  background: #ff3b3b;
+  box-shadow: 0 0 6px rgba(255, 59, 59, 0.6);
+}
+
+.cp-bezel-dot--cyan {
+  background: #00e5ff;
+  box-shadow: 0 0 6px rgba(0, 229, 255, 0.5);
+  animation-delay: 0.6s;
+}
+
+.cp-bezel-dot--green {
+  background: #00ff41;
+  box-shadow: 0 0 6px rgba(0, 255, 65, 0.5);
+  animation-delay: 1.2s;
+}
+
+.cp-bezel-label {
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-left: auto;
+  font-family: 'Courier New', monospace;
+}
+
+/* ── PANEL BODY ── */
+.cp-panel-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  gap: 8px;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── MODULES ── */
+.cp-module {
+  border: 2px solid rgba(0, 255, 65, 0.25);
+  box-shadow: 0 0 10px rgba(0, 255, 65, 0.15), inset 0 0 12px rgba(0, 255, 65, 0.2);
+  border-radius: 2px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(2, 27, 21, 1);
+}
+
+.cp-module--grow {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Event Stream fixed at 50% of panel height so other modules breathe */
+#mod-terminal {
+  flex: 0 0 50%;
+  min-height: 0;
+}
+
+/* ── MODULE HEADER ── */
+.cp-module-header {
+  height: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border-bottom: 1px solid rgba(0, 255, 65, 0.15);
+  flex-shrink: 0;
+}
+
+.cp-mod-number {
+  font-size: 6px;
+  color: #00ff41;
+  opacity: 0.5;
+  letter-spacing: 1px;
+  font-family: 'Courier New', monospace;
+}
+
+.cp-mod-title {
+  font-size: 7px;
+  color: #00ff41;
+  letter-spacing: 2.5px;
+  text-shadow: 0 0 6px rgba(0, 255, 65, 0.7);
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+}
+
+.cp-mod-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, rgba(0, 255, 65, 0.25), transparent);
+}
+
+.cp-live-dot {
+  font-size: 7px;
+  color: #00ff41;
+  font-family: 'Courier New', monospace;
+  animation: live-pulse 1.4s ease-in-out infinite;
+  text-shadow: 0 0 6px rgba(0, 255, 65, 0.5);
+  white-space: nowrap;
+}
+
+/* ── MODULE BODY ── */
+.cp-module-body {
+  flex: 1;
+  padding: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ── GEO NODE [01] — full-width top, 40% of viewport height ── */
+#mod-globe {
+  flex: 0 0 40vh;
+  min-height: 0;
+}
+
+/* ── SIGNUM 3D [03] — now inside the row ── */
+#mod-logo {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── MODULE ROW (side-by-side) — 20% of viewport height ── */
+.cp-module-row {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  flex: 0 0 20vh;
+  min-height: 0;
+}
+
+.cp-module-row .cp-module {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── DNA CANVAS ── */
+.cp-dna-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── SIGNUM 3D (Imperium logo) MODULE ── */
+.cp-logo-body {
+  padding: 4px;
+  gap: 3px;
+  position: relative;
+}
+
+#logo-container {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+#logo-container canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.cp-logo-label {
+  flex-shrink: 0;
+  font-size: 6px;
+  color: rgba(0, 255, 102, 0.45);
+  letter-spacing: 3px;
+  text-align: center;
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+  padding-bottom: 2px;
+}
+
+/* ── GLOBE MODULE ── */
+.cp-globe-body {
+  padding: 5px 6px 5px;
+  gap: 5px;
+  flex-direction: column;
+}
+
+/* Main area: [left-btns] [canvas] [right-btns] */
+.cp-globe-main {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-height: 0;
+}
+
+.cp-globe-canvas {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: block;
+}
+
+/* ── Planet selector buttons ── */
+.cp-planet-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 26px;
+}
+
+.cp-planet-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--pc);
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+  opacity: 0.45;
+  transition: opacity 0.2s ease, box-shadow 0.2s ease;
+  flex-shrink: 0;
+}
+
+.cp-planet-btn::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--pc);
+  opacity: 0.25;
+  transition: opacity 0.2s ease;
+}
+
+.cp-planet-btn.active {
+  opacity: 1;
+  box-shadow: 0 0 10px var(--pc), 0 0 4px var(--pc);
+}
+
+.cp-planet-btn.active::after {
+  opacity: 0.75;
+}
+
+.cp-planet-btn:hover:not(.active) {
+  opacity: 0.75;
+}
+
+/* Planet name label in header */
+#cp-planet-label {
+  font-size: 7px;
+  letter-spacing: 2px;
+  font-family: 'Courier New', monospace;
+  color: rgba(255, 165, 0, 0.65);
+  text-shadow: 0 0 5px rgba(255, 165, 0, 0.4);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ── Globe info bar: time LEFT | coords+country RIGHT ── */
+.cp-globe-info {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  font-family: 'Courier New', monospace;
+  padding: 0 2px;
+  border-top: 1px solid rgba(255, 160, 0, 0.12);
+  padding-top: 4px;
+}
+
+.cp-globe-time {
+  font-size: 15px;
+  color: #ffb300;
+  text-shadow: 0 0 8px rgba(255, 180, 0, 0.75);
+  letter-spacing: 1px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cp-globe-info-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.cp-globe-coords {
+  font-size: 10px;
+  color: rgba(255, 165, 0, 0.90);
+  text-shadow: 0 0 5px rgba(255, 160, 0, 0.4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cp-globe-country {
+  font-size: 9px;
+  color: rgba(255, 140, 0, 0.70);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── TERMINAL BODY ── */
+.cp-terminal-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── TERMINAL LINES (scrollable log) ── */
+.cp-terminal-lines {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-height: 0;
+}
+
+/* Cyberpunk scrollbar */
+.cp-terminal-lines::-webkit-scrollbar {
+  width: 3px;
+}
+.cp-terminal-lines::-webkit-scrollbar-track {
+  background: #000d00;
+}
+.cp-terminal-lines::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 65, 0.35);
+  border-radius: 2px;
+}
+.cp-terminal-lines::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 65, 0.65);
+}
+
+/* ── TERMINAL LINE ── */
+.cp-line {
+  font-size: 10px;
+  min-height: 15px;
+  line-height: 15px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  flex-shrink: 0;
+  font-family: 'Courier New', monospace;
+  color: rgba(0, 204, 51, 0.8);
+  text-shadow: 0 0 4px rgba(0, 255, 65, 0.35);
+  padding-bottom: 2px;
+}
+
+/* ── CURRENT INPUT LINE ── */
+.cp-current-input {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-family: 'Courier New', monospace;
+  color: #00e5ff;
+  text-shadow: 0 0 7px rgba(0, 229, 255, 0.5);
+  border-top: 1px solid rgba(0, 255, 65, 0.15);
+  margin-top: 3px;
+  padding-top: 2px;
+}
+
+.cp-prompt {
+  color: #00e5ff;
+  text-shadow: 0 0 6px rgba(0, 229, 255, 0.5);
+}
+
+.cp-input-text {
+  display: block;
+  color: #00e5ff;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 14px;
+  padding-left: 2px;
+}
+
+.cp-cursor {
+  display: inline-block;
+  width: 6px;
+  height: 11px;
+  background: #00ff41;
+  box-shadow: 0 0 6px rgba(0, 255, 65, 0.8);
+  animation: cp-blink 1s step-end infinite;
+  vertical-align: middle;
+  margin-left: 1px;
+}
+
+.cp-line--bright {
+  color: #00ff41;
+  text-shadow: 0 0 7px rgba(0, 255, 65, 0.7);
+}
+
+.cp-line--dim {
+  color: rgba(0, 80, 20, 0.6);
+  text-shadow: none;
+}
+
+/* Event type coloring via data-etype attribute */
+.cp-line[data-etype] {
+  color: var(--et-color);
+}
+
+.cp-line[data-etype="CLICK"],
+.cp-line[data-etype="DBLCLICK"] {
+  --et-color: #00ff41;
+}
+
+.cp-line[data-etype="KEY"] {
+  --et-color: #39ff7a;
+}
+
+.cp-line[data-etype="SELECT"] {
+  --et-color: #80ff80;
+}
+
+.cp-line[data-etype="DRAG"],
+.cp-line[data-etype="DROP"],
+.cp-line[data-etype="DRAGEND"] {
+  --et-color: #00ff41;
+}
+
+.cp-line[data-etype="SCROLL"],
+.cp-line[data-etype="WHEEL"],
+.cp-line[data-etype="BLUR"] {
+  --et-color: rgba(0, 180, 40, 0.6);
+}
+
+.cp-line[data-etype="FOCUS"] {
+  --et-color: #60ff90;
+}
+
+.cp-line[data-etype="COPY"],
+.cp-line[data-etype="PASTE"],
+.cp-line[data-etype="CUT"],
+.cp-line[data-etype="SUBMIT"],
+.cp-line[data-etype="RCLICK"] {
+  --et-color: #00ff41;
+}
+
+.cp-line[data-etype="TYP"] {
+  --et-color: #00cc33;
+}
+
+.cp-line[data-etype="PY"] {
+  --et-color: #00e5ff;
+  text-shadow: 0 0 6px rgba(0, 229, 255, 0.4);
+}
+
+/* ── TERMINAL STATUS BAR ── */
+.cp-term-status {
+  height: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(0, 255, 65, 0.1);
+  padding-top: 4px;
+  margin-top: 2px;
+}
+
+.cp-status-label {
+  font-size: 7px;
+  color: #00ff41;
+  opacity: 0.5;
+  letter-spacing: 1px;
+  font-family: 'Courier New', monospace;
+  white-space: nowrap;
+}
+
+.cp-status-bar {
+  flex: 1;
+  height: 2px;
+  background: #001400;
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.cp-status-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: #00ff41;
+  transition: width 0.15s ease-out;
+  box-shadow: 0 0 4px rgba(0, 255, 65, 0.5);
+}
+
+.cp-event-counter {
+  font-size: 7px;
+  color: #00ff41;
+  opacity: 0.5;
+  font-family: 'Courier New', monospace;
+  white-space: nowrap;
+}
+
+/* ═══ ANIMATIONS ═══ */
+
+@keyframes crt-flicker {
+  0%,100% { opacity: 0; }
+  8%       { opacity: 1; }
+  9%       { opacity: 0; }
+  50%      { opacity: 0.6; }
+  51%      { opacity: 0; }
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.2; }
+}
+
+@keyframes cp-dot-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+@keyframes cp-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+@keyframes panel-boot {
+  0%   { opacity: 0; transform: translateX(20px); }
+  40%  { opacity: 0.6; }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes phosphor-flash {
+  0%   { opacity: 0.9; }
+  30%  { opacity: 0.4; }
+  60%  { opacity: 0.7; }
+  100% { opacity: 0; pointer-events: none; }
+}

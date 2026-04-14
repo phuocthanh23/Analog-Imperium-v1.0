@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ANALOG IMPERIUM</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+
+  <!-- ── PRELOADING SCREEN (Imperium style, fades out after GLB loads) ── -->
+  <div id="ai-loading">
+    <span>INITIALIZING</span>
+    <div class="ai-loading-bar-wrap">
+      <div class="ai-loading-bar"></div>
+    </div>
+  </div>
+
+  <!-- CRT convergence filter — must be BEFORE #cp-root so filter is defined outside the filtered element -->
+  <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <filter id="crt-convergence" x="-3%" y="0%" width="106%" height="100%" color-interpolation-filters="sRGB">
+        <feColorMatrix type="matrix" in="SourceGraphic"
+          values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r"/>
+        <feColorMatrix type="matrix" in="SourceGraphic"
+          values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="g"/>
+        <feColorMatrix type="matrix" in="SourceGraphic"
+          values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="b"/>
+        <feOffset in="r" dx="-0.7" dy="0" result="ro"/>
+        <feOffset in="b" dx="0.7" dy="0" result="bo"/>
+        <feBlend in="ro" in2="g" mode="screen" result="rg"/>
+        <feBlend in="rg" in2="bo" mode="screen"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <div id="cp-root">
+
+    <!-- CRT overlays -->
+    <div class="cp-crt-scanlines"></div>
+    <div class="cp-crt-vignette"></div>
+    <div class="cp-crt-flicker"></div>
+    <!-- One-shot phosphor startup flash -->
+    <div class="cp-phosphor-flash"></div>
+
+    <!-- Bezel / title bar -->
+    <div class="cp-bezel-top">
+      <span class="cp-bezel-dot cp-bezel-dot--red"></span>
+      <span class="cp-bezel-dot cp-bezel-dot--cyan"></span>
+      <span class="cp-bezel-dot cp-bezel-dot--green"></span>
+      <span class="cp-bezel-label">ANALOG IMPERIUM // SECTOR-9</span>
+    </div>
+
+    <!-- Panel body -->
+    <div class="cp-panel-body">
+
+      <!-- [01] GEO NODE — full-width top (40vh) with planet selector -->
+      <div class="cp-module" id="mod-globe">
+        <div class="cp-module-header">
+          <span class="cp-mod-number">[01]</span>
+          <span class="cp-mod-title">GEO NODE</span>
+          <div class="cp-mod-line"></div>
+          <span id="cp-planet-label">TERRA</span>
+        </div>
+        <div class="cp-module-body cp-globe-body">
+
+          <div class="cp-globe-main">
+
+            <!-- Left planet buttons: slots 0-2 -->
+            <div class="cp-planet-btns">
+              <button class="cp-planet-btn active" data-planet="0" style="--pc:#ff9900" title="TERRA"></button>
+              <button class="cp-planet-btn"         data-planet="1" style="--pc:#00ff64" title="VERDANIA"></button>
+              <button class="cp-planet-btn"         data-planet="2" style="--pc:#ff50a0" title="ROSEA ◎"></button>
+            </div>
+
+            <canvas class="cp-globe-canvas"></canvas>
+
+            <!-- Right planet buttons: slots 3-5 -->
+            <div class="cp-planet-btns">
+              <button class="cp-planet-btn" data-planet="3" style="--pc:#b400ff" title="VIOLUM ◎"></button>
+              <button class="cp-planet-btn" data-planet="4" style="--pc:#ff5000" title="IGNIS"></button>
+              <button class="cp-planet-btn" data-planet="5" style="--pc:#dc3cff" title="LUMINA"></button>
+            </div>
+
+          </div><!-- /.cp-globe-main -->
+
+          <!-- Info bar: time LEFT · coords + country RIGHT -->
+          <div class="cp-globe-info">
+            <div class="cp-globe-time">--:--:--</div>
+            <div class="cp-globe-info-right">
+              <div class="cp-globe-coords">LOCATING...</div>
+              <div class="cp-globe-country">---</div>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /#mod-globe -->
+
+      <!-- [02]/[03] GENOME SEQ + SIGNUM·3D (side by side) -->
+      <div class="cp-module-row">
+
+        <!-- [02] GENOME SEQUENCER -->
+        <div class="cp-module" id="mod-dna">
+          <div class="cp-module-header">
+            <span class="cp-mod-number">[02]</span>
+            <span class="cp-mod-title">GENOME SEQ</span>
+            <div class="cp-mod-line"></div>
+          </div>
+          <div class="cp-module-body">
+            <canvas class="cp-dna-canvas"></canvas>
+          </div>
+        </div>
+
+        <!-- [03] SIGNUM·3D -->
+        <div class="cp-module" id="mod-logo">
+          <div class="cp-module-header">
+            <span class="cp-mod-number">[03]</span>
+            <span class="cp-mod-title">SIGNUM·3D</span>
+            <div class="cp-mod-line"></div>
+          </div>
+          <div class="cp-module-body cp-logo-body">
+            <div id="logo-container"></div>
+            <div class="cp-logo-label">AVE·IMPERATOR</div>
+          </div>
+        </div>
+
+      </div><!-- /.cp-module-row -->
+
+      <!-- [04] EVENT STREAM -->
+      <div class="cp-module cp-module--grow" id="mod-terminal">
+        <div class="cp-module-header">
+          <span class="cp-mod-number">[04]</span>
+          <span class="cp-mod-title">EVENT STREAM</span>
+          <div class="cp-mod-line"></div>
+          <span class="cp-live-dot">&#9679; LIVE</span>
+        </div>
+        <div class="cp-module-body cp-terminal-body">
+          <div class="cp-terminal-lines"></div>
+          <!-- Active input line — always visible at bottom, committed on Enter -->
+          <div class="cp-current-input">
+            <span class="cp-prompt">&gt;&gt;&nbsp;</span><span class="cp-input-text"></span><span class="cp-cursor"></span>
+          </div>
+          <div class="cp-term-status">
+            <span class="cp-status-label">EVT</span>
+            <div class="cp-status-bar">
+              <div class="cp-status-bar-fill"></div>
+            </div>
+            <span class="cp-event-counter">0</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.cp-panel-body -->
+  </div><!-- /#cp-root -->
+
+  <script src="three.min.js"></script>
+  <script src="GLTFLoader.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+</html>
