@@ -29,6 +29,10 @@ saveBtn.addEventListener('click', function () {
   chrome.storage.sync.set({ codexUrl: raw, signumModel: selectedModel }, function () {
     statusEl.classList.add('visible');
     setTimeout(function () { statusEl.classList.remove('visible'); }, 2000);
+    // Reload the side panel so the new model loads immediately
+    chrome.runtime.sendMessage({ action: 'reloadPanel' }, function () {
+      if (chrome.runtime.lastError) { /* panel not open — no-op */ }
+    });
   });
 });
 

@@ -192,8 +192,9 @@
   // Returns { setSpeed(s) } so intensity decay can drive rotation speed.
   // Speed arg maps Analog Terminal's 0.6–2.1 range → rotation rate.
   // glbPath: relative path to the GLB file (defaults to 'logo.glb')
-  function initLogo3D(glbPath) {
-    glbPath = glbPath || 'logo.glb';
+  function initLogo3D(glbPath, scaleMult) {
+    glbPath   = glbPath   || 'logo.glb';
+    scaleMult = scaleMult || 1.0;
     const container = document.getElementById('logo-container');
     if (!container) return { setSpeed: function () {} };
 
@@ -237,7 +238,7 @@
         const box    = new THREE.Box3().setFromObject(root);
         const center = box.getCenter(new THREE.Vector3());
         const size   = box.getSize(new THREE.Vector3());
-        const scale  = 5.04 / Math.max(size.x, size.y, size.z);
+        const scale  = (5.04 / Math.max(size.x, size.y, size.z)) * scaleMult;
         root.position.sub(center.multiplyScalar(scale));
         root.scale.setScalar(scale);
 
@@ -1214,9 +1215,10 @@
     let i = 0;
 
     const SIGNUM_MODELS = {
-      'imperium': { glb: 'logo.glb',                            label: 'AVE·IMPERATOR' },
-      'bolter':   { glb: '3d_objects/40k_bolter.glb',           label: 'BOLT·GUN·PRIME' },
-      'templars': { glb: '3d_objects/black_templars_cross.glb',  label: 'DEUS·VULT' },
+      'imperium':  { glb: 'logo.glb',                            label: 'AVE·IMPERATOR',  scale: 1.00 },
+      'bolter':    { glb: '3d_objects/40k_bolter.glb',           label: 'BOLT·GUN·PRIME', scale: 1.00 },
+      'templars':  { glb: '3d_objects/black_templars_cross.glb',  label: 'DEUS·VULT',      scale: 1.00 },
+      'inquisitor':{ glb: '3d_objects/Inquisitor.glb',           label: 'ORDO·MALLEUS',   scale: 0.85 },
     };
 
     function showNext() {
@@ -1228,7 +1230,7 @@
           // Update the label beneath the Signum module
           const labelEl  = document.getElementById('cp-signum-label');
           if (labelEl) labelEl.textContent = model.label;
-          logo3d = initLogo3D(model.glb);
+          logo3d = initLogo3D(model.glb, model.scale || 1.0);
           dna    = initDNA();
           initGlobe();
         });
@@ -1414,6 +1416,11 @@
       }, entry.delay);
     });
   }
+
+  // Reload the panel when options page saves new settings
+  chrome.runtime.onMessage.addListener(function (msg) {
+    if (msg && msg.action === 'reloadPanel') window.location.reload();
+  });
 
   // Guard against double-boot
   let booted = false;
