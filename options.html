@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>ANALOG IMPERIUM — SETTINGS</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #050e05;
+      color: #00ff41;
+      font-family: 'Courier New', monospace;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .panel {
+      width: 480px;
+      border: 1px solid rgba(0, 255, 65, 0.25);
+      box-shadow: 0 0 30px rgba(0, 255, 65, 0.08), inset 0 0 40px rgba(0, 255, 65, 0.04);
+      background: rgba(2, 27, 21, 0.95);
+    }
+
+    .panel-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid rgba(0, 255, 65, 0.15);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .panel-header h1 {
+      font-size: 10px;
+      letter-spacing: 4px;
+      color: #00ff41;
+      text-shadow: 0 0 8px rgba(0, 255, 65, 0.6);
+      font-weight: normal;
+      text-transform: uppercase;
+    }
+
+    .panel-header span {
+      font-size: 8px;
+      color: rgba(0, 255, 65, 0.4);
+      letter-spacing: 2px;
+    }
+
+    .panel-body {
+      padding: 28px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .setting-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .setting-label {
+      font-size: 8px;
+      letter-spacing: 3px;
+      color: rgba(255, 179, 0, 0.8);
+      text-transform: uppercase;
+      text-shadow: 0 0 6px rgba(255, 179, 0, 0.4);
+    }
+
+    .setting-desc {
+      font-size: 8px;
+      letter-spacing: 1px;
+      color: rgba(0, 255, 65, 0.35);
+      line-height: 1.6;
+    }
+
+    .setting-input {
+      background: transparent;
+      border: 1px solid rgba(255, 179, 0, 0.35);
+      color: #ffb300;
+      font-family: 'Courier New', monospace;
+      font-size: 9px;
+      letter-spacing: 1px;
+      padding: 10px 12px;
+      outline: none;
+      width: 100%;
+      caret-color: #ffb300;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .setting-input::placeholder {
+      color: rgba(255, 179, 0, 0.25);
+    }
+
+    .setting-input:focus {
+      border-color: rgba(255, 179, 0, 0.85);
+      box-shadow: 0 0 12px rgba(255, 179, 0, 0.15);
+    }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(to right, rgba(0, 255, 65, 0.15), transparent);
+    }
+
+    .btn-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .btn-save {
+      background: transparent;
+      border: 1px solid rgba(0, 255, 65, 0.45);
+      color: #00ff41;
+      font-family: 'Courier New', monospace;
+      font-size: 8px;
+      letter-spacing: 3px;
+      padding: 9px 22px;
+      cursor: pointer;
+      text-transform: uppercase;
+      text-shadow: 0 0 6px rgba(0, 255, 65, 0.5);
+      box-shadow: 0 0 8px rgba(0, 255, 65, 0.08);
+      transition: border-color 0.2s, box-shadow 0.2s, color 0.2s;
+    }
+
+    .btn-save:hover {
+      border-color: rgba(0, 255, 65, 0.9);
+      box-shadow: 0 0 14px rgba(0, 255, 65, 0.3);
+      color: #fff;
+    }
+
+    #status {
+      font-size: 8px;
+      letter-spacing: 2px;
+      color: rgba(0, 255, 65, 0.0);
+      text-transform: uppercase;
+      transition: color 0.3s;
+    }
+
+    #status.visible {
+      color: rgba(0, 255, 65, 0.7);
+    }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <div class="panel-header">
+      <h1>Analog Imperium</h1>
+      <span>// SETTINGS</span>
+    </div>
+    <div class="panel-body">
+
+      <div class="setting-group">
+        <div class="setting-label">Open Codex — Target URL</div>
+        <div class="setting-desc">
+          URL to open when the + OPEN CODEX button is pressed.<br>
+          Leave blank to open a plain incognito tab.
+        </div>
+        <input class="setting-input" id="codex-url" type="text"
+               placeholder="https://example.com" spellcheck="false" autocomplete="off" />
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="btn-row">
+        <button class="btn-save" id="btn-save">SAVE SETTINGS</button>
+        <span id="status">COGITATOR UPDATED</span>
+      </div>
+
+    </div>
+  </div>
+  <script src="options.js"></script>
+</body>
+</html>

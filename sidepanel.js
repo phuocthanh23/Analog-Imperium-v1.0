@@ -1104,9 +1104,17 @@
 
   // ── OPEN CODEX BUTTON ──
   const incognitoBtn = document.getElementById('cp-incognito-btn');
+
   if (incognitoBtn) {
     incognitoBtn.addEventListener('click', function () {
-      chrome.windows.create({ incognito: true });
+      chrome.storage.sync.get('codexUrl', function (data) {
+        const raw  = (data.codexUrl || '').trim();
+        const opts = {};
+        if (raw) {
+          opts.url = /^https?:\/\//i.test(raw) ? raw : 'https://' + raw;
+        }
+        chrome.tabs.create(opts);
+      });
     });
   }
 

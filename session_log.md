@@ -10,7 +10,43 @@
 
 ---
 
-## Session Changes (2026-04-14)
+## Session Changes — Part 2 (2026-04-14)
+
+### Speed Test — Network Error Fixes (commit `8c1fbcd`)
+- **`ip-api.com` 403** — free tier blocks HTTPS; switched to `http://ip-api.com/json` in code and manifest
+- **`ERR_CERT_COMMON_NAME_INVALID`** on Ookla servers (e.g. `speedtest.viettel.vn`) — removed forced `http→https` conversion; Ookla servers use HTTP natively
+- **`ERR_CONNECTION_RESET`** — same root cause as above; fixed by same change
+- Dropped `&https_functional=true` filter to restore full 10-server candidate pool
+
+### Open Codex — Settings Page + Behaviour Change
+- **Moved custom URL out of the side panel UI** — removed input field; clean button-only UI restored
+- **Added extension Options page** (`options.html` + `options.js`):
+  - Access via right-click extension icon → **Options**
+  - Cyberpunk-themed settings panel (dark green, amber accents)
+  - URL input with `SAVE SETTINGS` button; Enter key also saves
+  - `COGITATOR UPDATED` confirmation flash on save (2 s fade)
+- **`manifest.json`** — added `"storage"` permission + `"options_page": "options.html"`
+- **`sidepanel.js`** — button reads URL from `chrome.storage.sync` at click time
+- **Behaviour changed** — `+ OPEN CODEX` now opens a new tab in the current window (`chrome.tabs.create`) instead of a new incognito window; URL from settings is applied if set, otherwise opens a blank new tab
+
+### Current File List
+| File | Role |
+|------|------|
+| `manifest.json` | MV3 config — permissions: sidePanel, geolocation, tabs, storage |
+| `background.js` | Service worker; bridges content → side panel |
+| `content.js` | Keystroke capture (printable, Backspace, Enter) |
+| `sidepanel.html` | 4 modules + Open Codex button |
+| `sidepanel.css` | Full cyberpunk theme |
+| `sidepanel.js` | All side panel logic |
+| `options.html` | Extension settings page |
+| `options.js` | Settings load/save logic |
+| `three.min.js` | Bundled THREE.js |
+| `GLTFLoader.js` | GLB loader |
+| `logo.glb` | Imperium sigil 3D mesh |
+
+---
+
+## Session Changes — Part 1 (2026-04-14)
 
 ### Bug Fix
 - **`sidepanel.js`** — `wpmTimestamps` was used but never declared, causing a `ReferenceError` in strict mode on every keystroke. Fixed by adding `let wpmTimestamps = [];` to the state block. This was the root cause of typing not being reflected in the extension.
