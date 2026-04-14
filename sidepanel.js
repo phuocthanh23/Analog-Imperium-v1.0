@@ -234,13 +234,17 @@
       function (gltf) {
         const root = gltf.scene;
 
-        // Centre and fit model to 3 units
+        // Centre and fit model to ~5 units
+        // Reset any position baked into the GLB root before measuring,
+        // then SET (not add to) the centering offset so embedded offsets
+        // don't shift the object away from the world origin.
+        root.position.set(0, 0, 0);
         const box    = new THREE.Box3().setFromObject(root);
         const center = box.getCenter(new THREE.Vector3());
         const size   = box.getSize(new THREE.Vector3());
         const scale  = (5.04 / Math.max(size.x, size.y, size.z)) * scaleMult;
-        root.position.sub(center.multiplyScalar(scale));
         root.scale.setScalar(scale);
+        root.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
 
         // Collect meshes before traversal-with-mutation
         const meshes = [];
@@ -1131,16 +1135,24 @@
         if (lp.z > 0.05) {
           var lx = cx + lp.x * r, ly = cy + lp.y * r;
           var lpulse = 1 + 0.45 * Math.sin(now / 380);
+          // Outer pulsing ring
           ctx.beginPath();
-          ctx.arc(lx, ly, 5 * lpulse, 0, Math.PI * 2);
-          ctx.strokeStyle = 'rgba(255,220,0,0.5)';
-          ctx.lineWidth = 0.8;
+          ctx.arc(lx, ly, 10 * lpulse, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(255,220,0,0.35)';
+          ctx.lineWidth = 1;
           ctx.stroke();
+          // Inner pulsing ring
           ctx.beginPath();
-          ctx.arc(lx, ly, 2, 0, Math.PI * 2);
+          ctx.arc(lx, ly, 6 * lpulse, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(255,220,0,0.6)';
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+          // Core dot
+          ctx.beginPath();
+          ctx.arc(lx, ly, 4, 0, Math.PI * 2);
           ctx.fillStyle   = '#ffd200';
           ctx.shadowColor = '#ffd200';
-          ctx.shadowBlur  = 10;
+          ctx.shadowBlur  = 18;
           ctx.fill();
           ctx.shadowBlur = 0;
         }
