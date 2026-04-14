@@ -43,14 +43,6 @@
     <!-- One-shot phosphor startup flash -->
     <div class="cp-phosphor-flash"></div>
 
-    <!-- Bezel / title bar -->
-    <div class="cp-bezel-top">
-      <span class="cp-bezel-dot cp-bezel-dot--red"></span>
-      <span class="cp-bezel-dot cp-bezel-dot--cyan"></span>
-      <span class="cp-bezel-dot cp-bezel-dot--green"></span>
-      <span class="cp-bezel-label">ANALOG IMPERIUM // SECTOR-9</span>
-    </div>
-
     <!-- Panel body -->
     <div class="cp-panel-body">
 
@@ -103,11 +95,29 @@
         <div class="cp-module" id="mod-dna">
           <div class="cp-module-header">
             <span class="cp-mod-number">[02]</span>
-            <span class="cp-mod-title">GENOME SEQ</span>
+            <span class="cp-mod-title">GENE-SEED</span>
             <div class="cp-mod-line"></div>
           </div>
-          <div class="cp-module-body">
-            <canvas class="cp-dna-canvas"></canvas>
+          <div class="cp-module-body cp-geneseed-body">
+            <div id="dna-container"></div>
+            <div class="cp-speed-panel">
+              <div class="cp-speed-node" id="cp-speed-node">NODE · UNKNOWN</div>
+              <div class="cp-speed-block">
+                <div class="cp-speed-label">▼ DL</div>
+                <div class="cp-speed-line">
+                  <span class="cp-speed-value" id="cp-dl-speed">--</span>
+                  <span class="cp-speed-unit">Mbps</span>
+                </div>
+              </div>
+              <div class="cp-speed-block">
+                <div class="cp-speed-label">▲ UL</div>
+                <div class="cp-speed-line">
+                  <span class="cp-speed-value" id="cp-ul-speed">--</span>
+                  <span class="cp-speed-unit">Mbps</span>
+                </div>
+              </div>
+              <button class="cp-genequality-btn" id="cp-genequality-btn">ANALYZE</button>
+            </div>
           </div>
         </div>
 
@@ -149,6 +159,9 @@
           </div>
         </div>
       </div>
+
+      <!-- OPEN CODEX button -->
+      <button class="cp-open-codex-btn" id="cp-incognito-btn">+ OPEN CODEX</button>
 
     </div><!-- /.cp-panel-body -->
   </div><!-- /#cp-root -->

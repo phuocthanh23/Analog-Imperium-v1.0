@@ -14,6 +14,7 @@
   let totalEvents = 0;
   let eventIntensity = 0;
   let lines = [];
+  let wpmTimestamps = [];
   let logo3d = null; // handle returned by initLogo3D()
   let dna    = null; // handle returned by initDNA()
 
@@ -74,7 +75,7 @@
   const inputTextEl    = document.querySelector('.cp-input-text');
   const statusBarFill  = document.querySelector('.cp-status-bar-fill');
   const eventCounter   = document.querySelector('.cp-event-counter');
-  const dnaCanvas      = document.querySelector('.cp-dna-canvas');
+  const dnaContainer   = document.getElementById('dna-container');
   const globeCanvas    = document.querySelector('.cp-globe-canvas');
   const globeTimeEl    = document.querySelector('.cp-globe-time');
   const globeCoordsEl  = document.querySelector('.cp-globe-coords');
@@ -329,78 +330,113 @@
     };
   }
 
-  // ── DNA ANIMATION ──
+  // ── GENE-SEED 3D DNA ──
   function initDNA() {
-    if (!dnaCanvas) return { setSpeed: function () {} };
+    if (!dnaContainer) return { setSpeed: function () {} };
+    if (typeof THREE === 'undefined') return { setSpeed: function () {} };
 
-    function resizeCanvas() {
-      dnaCanvas.width  = dnaCanvas.offsetWidth;
-      dnaCanvas.height = dnaCanvas.offsetHeight;
+    const W = dnaContainer.clientWidth  || 120;
+    const H = dnaContainer.clientHeight || 100;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setSize(W, H);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setClearColor(0x021b15, 1);
+    dnaContainer.appendChild(renderer.domElement);
+
+    const scene  = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(42, W / H, 0.01, 1000);
+    camera.position.set(0, 0, 9);
+
+    scene.add(new THREE.AmbientLight(0x00ff66, 0.35));
+    const pl1 = new THREE.PointLight(0x00ff44, 2.5, 30);
+    pl1.position.set(3, 4, 5);
+    scene.add(pl1);
+    const pl2 = new THREE.PointLight(0x00cc33, 1.2, 25);
+    pl2.position.set(-3, -2, 3);
+    scene.add(pl2);
+
+    const dnaGroup = new THREE.Group();
+    scene.add(dnaGroup);
+
+    const STEPS       = 48;
+    const TURNS       = 2.5;
+    const HELIX_R     = 1.1;
+    const HELIX_H     = 5.5;
+
+    const matA = new THREE.MeshStandardMaterial({ color: 0x00ff44, emissive: 0x00bb44, emissiveIntensity: 0.5 });
+    const matB = new THREE.MeshStandardMaterial({ color: 0x00dd33, emissive: 0x006622, emissiveIntensity: 0.4 });
+    const matC = new THREE.MeshStandardMaterial({ color: 0x00ff66, emissive: 0x003311, emissiveIntensity: 0.3, transparent: true, opacity: 0.75 });
+    const sphereGeo = new THREE.SphereGeometry(0.13, 10, 10);
+
+    // Build strands + base-pair connectors
+    const posA = [], posB = [];
+    for (let i = 0; i <= STEPS; i++) {
+      const t     = i / STEPS;
+      const angle = t * Math.PI * 2 * TURNS;
+      const y     = (t - 0.5) * HELIX_H;
+      posA.push(new THREE.Vector3(Math.cos(angle) * HELIX_R, y, Math.sin(angle) * HELIX_R));
+      posB.push(new THREE.Vector3(Math.cos(angle + Math.PI) * HELIX_R, y, Math.sin(angle + Math.PI) * HELIX_R));
     }
-    resizeCanvas();
+
+    // Strand spheres
+    posA.forEach(function (p) { const m = new THREE.Mesh(sphereGeo, matA); m.position.copy(p); dnaGroup.add(m); });
+    posB.forEach(function (p) { const m = new THREE.Mesh(sphereGeo, matB); m.position.copy(p); dnaGroup.add(m); });
+
+    // Backbone tubes (cylinder between consecutive spheres on each strand)
+    function addBackbone(pts, mat) {
+      for (let i = 0; i < pts.length - 1; i++) {
+        const dir = pts[i + 1].clone().sub(pts[i]);
+        const len = dir.length();
+        const mid = pts[i].clone().add(pts[i + 1]).multiplyScalar(0.5);
+        const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, len, 6), mat);
+        cyl.position.copy(mid);
+        cyl.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+        dnaGroup.add(cyl);
+      }
+    }
+    addBackbone(posA, matA);
+    addBackbone(posB, matB);
+
+    // Base-pair connectors every 4 steps
+    for (let i = 0; i <= STEPS; i += 4) {
+      const a = posA[i], b = posB[i];
+      const dir = b.clone().sub(a);
+      const len = dir.length();
+      const mid = a.clone().add(b).multiplyScalar(0.5);
+      const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, len, 6), matC);
+      cyl.position.copy(mid);
+      cyl.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+      dnaGroup.add(cyl);
+    }
+
+    let rotSpeed = 0.008;
+    let pulse    = 0;
+
+    function animate() {
+      requestAnimationFrame(animate);
+      pulse += 0.02;
+      dnaGroup.rotation.y += rotSpeed;
+      const ei = 0.4 + Math.sin(pulse) * 0.15;
+      matA.emissiveIntensity = ei;
+      matB.emissiveIntensity = ei * 0.75;
+      renderer.render(scene, camera);
+    }
+    animate();
+
     if (typeof ResizeObserver !== 'undefined') {
-      new ResizeObserver(resizeCanvas).observe(dnaCanvas);
-    }
-
-    let offset = 0;
-    let speed  = 0.6;
-
-    function draw() {
-      const ctx = dnaCanvas.getContext('2d');
-      const W = dnaCanvas.width, H = dnaCanvas.height;
-      if (W === 0 || H === 0) { requestAnimationFrame(draw); return; }
-
-      ctx.clearRect(0, 0, W, H);
-      const cy = H / 2, amp = H * 0.34, freq = 0.09;
-
-      ctx.strokeStyle = '#00ff41';
-      ctx.lineWidth   = 1.5;
-      ctx.shadowColor = '#00ff41';
-      ctx.shadowBlur  = 5;
-
-      ctx.beginPath();
-      for (let x = 0; x <= W; x++) {
-        const y = cy + amp * Math.sin(x * freq + offset);
-        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-
-      ctx.beginPath();
-      for (let x = 0; x <= W; x++) {
-        const y = cy + amp * Math.sin(x * freq + offset + Math.PI);
-        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-
-      for (let x = 0; x <= W; x += 10) {
-        const y1 = cy + amp * Math.sin(x * freq + offset);
-        const y2 = cy + amp * Math.sin(x * freq + offset + Math.PI);
-        const rawAlpha = Math.max(0, 0.5 - Math.abs(y1 - y2) / (amp * 2)) * 1.2;
-        const alpha = Math.min(rawAlpha, 0.6);
-        if (alpha > 0.02) {
-          ctx.beginPath();
-          ctx.strokeStyle = 'rgba(0, 255, 65, ' + alpha + ')';
-          ctx.lineWidth   = 1;
-          ctx.shadowBlur  = 3;
-          ctx.moveTo(x, y1);
-          ctx.lineTo(x, y2);
-          ctx.stroke();
-
-          const dotAlpha = Math.min(alpha + 0.15, 0.75);
-          ctx.fillStyle   = 'rgba(0, 255, 65, ' + dotAlpha + ')';
-          ctx.shadowColor = '#00ff41';
-          ctx.shadowBlur  = 4;
-          ctx.beginPath(); ctx.arc(x, y1, 1.8, 0, Math.PI * 2); ctx.fill();
-          ctx.beginPath(); ctx.arc(x, y2, 1.8, 0, Math.PI * 2); ctx.fill();
+      new ResizeObserver(function () {
+        const w = dnaContainer.clientWidth;
+        const h = dnaContainer.clientHeight;
+        if (w && h) {
+          camera.aspect = w / h;
+          camera.updateProjectionMatrix();
+          renderer.setSize(w, h);
         }
-      }
-
-      offset += speed * 0.025;
-      requestAnimationFrame(draw);
+      }).observe(dnaContainer);
     }
 
-    requestAnimationFrame(draw);
-    return { setSpeed: function (s) { speed = s; } };
+    return { setSpeed: function (s) { rotSpeed = 0.003 + s * 0.006; } };
   }
 
   // ── HOLOGRAM PLANET SYSTEM (6 worlds, selectable) ──
@@ -1065,6 +1101,76 @@
 
     showNext();
   }
+
+  // ── OPEN CODEX BUTTON ──
+  const incognitoBtn = document.getElementById('cp-incognito-btn');
+  if (incognitoBtn) {
+    incognitoBtn.addEventListener('click', function () {
+      chrome.windows.create({ incognito: true });
+    });
+  }
+
+  // ── GENE-SEED SPEED TEST ──
+  const CF_BASE      = 'https://speed.cloudflare.com';
+  const dlSpeedEl    = document.getElementById('cp-dl-speed');
+  const ulSpeedEl    = document.getElementById('cp-ul-speed');
+  const speedNodeEl  = document.getElementById('cp-speed-node');
+  const geneTestBtn  = document.getElementById('cp-genequality-btn');
+  let   speedTesting = false;
+
+  async function runGeneTest() {
+    if (speedTesting) return;
+    speedTesting = true;
+    if (geneTestBtn)  { geneTestBtn.disabled = true; geneTestBtn.textContent = 'DETECTING NODE...'; }
+    if (dlSpeedEl)    dlSpeedEl.textContent = '--';
+    if (ulSpeedEl)    ulSpeedEl.textContent = '--';
+    if (speedNodeEl)  speedNodeEl.textContent = '';
+
+    try {
+      // Detect nearest Cloudflare PoP
+      const meta = await fetch(CF_BASE + '/meta', { cache: 'no-store' })
+        .then(function (r) { return r.json(); })
+        .catch(function () { return null; });
+      const node = (meta && meta.colo) ? meta.colo : 'UNKNOWN';
+      if (speedNodeEl) speedNodeEl.textContent = 'NODE·' + node;
+
+      // Download test — stream 10 MB, update live
+      if (geneTestBtn) geneTestBtn.textContent = 'GENE-SCREENING...';
+      const DL_BYTES = 10000000;
+      const dlStart  = performance.now();
+      const dlResp   = await fetch(CF_BASE + '/__down?bytes=' + DL_BYTES + '&measId=1', { cache: 'no-store' });
+      const reader   = dlResp.body.getReader();
+      let   dlTotal  = 0;
+      while (true) {
+        const chunk = await reader.read();
+        if (chunk.done) break;
+        dlTotal += chunk.value.length;
+        const t = (performance.now() - dlStart) / 1000;
+        if (t > 0.3 && dlSpeedEl) dlSpeedEl.textContent = ((dlTotal * 8) / t / 1e6).toFixed(1);
+      }
+      const dlFinal = (dlTotal * 8) / ((performance.now() - dlStart) / 1000) / 1e6;
+      if (dlSpeedEl) dlSpeedEl.textContent = dlFinal.toFixed(1);
+
+      // Upload test — POST 3 MB of zeroed data
+      if (geneTestBtn) geneTestBtn.textContent = 'GENE-TITHE UPLINK...';
+      const UL_BYTES = 3000000;
+      const ulData   = new Uint8Array(UL_BYTES);
+      const ulStart  = performance.now();
+      await fetch(CF_BASE + '/__up', { method: 'POST', body: ulData, cache: 'no-store' });
+      const ulFinal  = (UL_BYTES * 8) / ((performance.now() - ulStart) / 1000) / 1e6;
+      if (ulSpeedEl) ulSpeedEl.textContent = ulFinal.toFixed(1);
+
+    } catch (err) {
+      if (dlSpeedEl)   dlSpeedEl.textContent  = 'ERR';
+      if (ulSpeedEl)   ulSpeedEl.textContent  = 'ERR';
+      if (speedNodeEl) speedNodeEl.textContent = 'SIGNAL LOST';
+    }
+
+    speedTesting = false;
+    if (geneTestBtn) { geneTestBtn.disabled = false; geneTestBtn.textContent = 'ANALYZE'; }
+  }
+
+  if (geneTestBtn) geneTestBtn.addEventListener('click', runGeneTest);
 
   // Guard against double-boot
   let booted = false;

@@ -192,9 +192,9 @@ html, body {
   min-height: 0;
 }
 
-/* Event Stream fixed at 50% of panel height so other modules breathe */
+/* Event Stream fixed at 40% of viewport height */
 #mod-terminal {
-  flex: 0 0 50%;
+  flex: 0 0 40vh;
   min-height: 0;
 }
 
@@ -253,7 +253,7 @@ html, body {
 
 /* ── GEO NODE [01] — full-width top, 40% of viewport height ── */
 #mod-globe {
-  flex: 0 0 40vh;
+  flex: 0 0 30vh;
   min-height: 0;
 }
 
@@ -277,11 +277,105 @@ html, body {
   min-width: 0;
 }
 
-/* ── DNA CANVAS ── */
-.cp-dna-canvas {
-  width: 100%;
-  height: 100%;
+/* ── GENE-SEED MODULE BODY (row layout) ── */
+.cp-geneseed-body {
+  flex-direction: row !important;
+  gap: 8px;
+  padding: 6px 8px;
+}
+
+/* ── GENE-SEED 3D CONTAINER ── */
+#dna-container {
+  flex: 0 0 38%;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+#dna-container canvas {
   display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* ── SPEED PANEL ── */
+.cp-speed-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+  padding: 2px 0;
+}
+
+.cp-speed-node {
+  font-size: 7px;
+  color: rgba(0, 229, 255, 0.6);
+  font-family: 'Courier New', monospace;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.cp-speed-block {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.cp-speed-line {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.cp-speed-label {
+  font-size: 7px;
+  color: rgba(0, 255, 65, 0.55);
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+}
+
+.cp-speed-value {
+  font-size: 28px;
+  line-height: 1;
+  color: #00ff41;
+  font-family: 'Courier New', monospace;
+  text-shadow: 0 0 10px rgba(0, 255, 65, 0.7);
+  letter-spacing: 1px;
+}
+
+.cp-speed-unit {
+  font-size: 9px;
+  color: rgba(0, 255, 65, 0.55);
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+}
+
+.cp-genequality-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 179, 0, 0.45);
+  color: #ffb300;
+  font-family: 'Courier New', monospace;
+  font-size: 8px;
+  letter-spacing: 3px;
+  padding: 5px 0;
+  cursor: pointer;
+  text-transform: uppercase;
+  text-shadow: 0 0 6px rgba(255, 179, 0, 0.5);
+  box-shadow: 0 0 8px rgba(255, 179, 0, 0.1), inset 0 0 10px rgba(255, 179, 0, 0.04);
+  transition: border-color 0.2s, box-shadow 0.2s, color 0.2s;
+  width: 100%;
+}
+
+.cp-genequality-btn:hover:not(:disabled) {
+  border-color: rgba(255, 179, 0, 0.9);
+  box-shadow: 0 0 14px rgba(255, 179, 0, 0.4), inset 0 0 14px rgba(255, 179, 0, 0.07);
+  color: #ffe066;
+}
+
+.cp-genequality-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 /* ── SIGNUM 3D (Imperium logo) MODULE ── */
@@ -403,7 +497,7 @@ html, body {
 .cp-globe-info {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   flex-shrink: 0;
   font-family: 'Courier New', monospace;
@@ -413,7 +507,8 @@ html, body {
 }
 
 .cp-globe-time {
-  font-size: 15px;
+  font-size: 24px;
+  line-height: 1;
   color: #ffb300;
   text-shadow: 0 0 8px rgba(255, 180, 0, 0.75);
   letter-spacing: 1px;
@@ -425,8 +520,10 @@ html, body {
   flex: 1;
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
   gap: 1px;
   min-width: 0;
+  text-align: right;
 }
 
 .cp-globe-coords {
@@ -636,6 +733,33 @@ html, body {
   opacity: 0.5;
   font-family: 'Courier New', monospace;
   white-space: nowrap;
+}
+
+/* ── OPEN CODEX standalone button ── */
+.cp-open-codex-btn {
+  flex: 0 0 5vh;
+  width: 100%;
+  background: transparent;
+  border: 1px solid rgba(255, 179, 0, 0.4);
+  color: #ffb300;
+  font-family: 'Courier New', monospace;
+  font-size: 8px;
+  letter-spacing: 3px;
+  cursor: pointer;
+  text-transform: uppercase;
+  text-shadow: 0 0 6px rgba(255, 179, 0, 0.5);
+  box-shadow: 0 0 8px rgba(255, 179, 0, 0.1), inset 0 0 12px rgba(255, 179, 0, 0.05);
+  transition: border-color 0.2s, box-shadow 0.2s, color 0.2s;
+}
+
+.cp-open-codex-btn:hover {
+  border-color: rgba(255, 179, 0, 0.9);
+  box-shadow: 0 0 14px rgba(255, 179, 0, 0.45), inset 0 0 16px rgba(255, 179, 0, 0.08);
+  color: #ffe066;
+}
+
+.cp-open-codex-btn:active {
+  box-shadow: 0 0 6px rgba(255, 179, 0, 0.2);
 }
 
 /* ═══ ANIMATIONS ═══ */
