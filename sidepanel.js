@@ -17,31 +17,41 @@
   let wpmTimestamps = [];
   let logo3d = null; // handle returned by initLogo3D()
   let dna    = null; // handle returned by initDNA()
+  let keyPressCount = 0;       // counts each committed keystroke
+  const KEY_FLUSH_AT = 100;    // clear all lines after this many keypresses
 
-  // ── PYTHON CODE POOL ──
+  // ── PYTHON CODE POOL (short one-liners only) ──
   const PYTHON_POOL = [
-    `def fib(n):\n    a,b=0,1\n    for _ in range(n):a,b=b,a+b\n    return a`,
-    `def is_prime(n):\n    return n>1 and all(n%i for i in range(2,int(n**.5)+1))`,
-    `palindrome=lambda s:(t:=''.join(c for c in s.lower() if c.isalnum())) == t[::-1]`,
-    `def two_sum(nums,t):\n    s={}\n    for i,n in enumerate(nums):\n        if t-n in s:return[s[t-n],i]\n        s[n]=i`,
-    `def binary_search(a,t):\n    lo,hi=0,len(a)-1\n    while lo<=hi:\n        m=(lo+hi)//2\n        if a[m]==t:return m\n        lo,hi=(m+1,hi)if a[m]<t else(lo,m-1)\n    return -1`,
-    `quicksort=lambda a:[]if not a else quicksort([x for x in a[1:]if x<=a[0]])+[a[0]]+quicksort([x for x in a[1:]if x>a[0]])`,
-    `def flatten(l):\n    return[x for i in l for x in(flatten(i)if isinstance(i,list)else[i])]`,
-    `from collections import Counter\nword_freq=lambda t:Counter(t.lower().split()).most_common(5)`,
-    `def bfs(g,s):\n    seen,q=[s],[s]\n    for v in q:q+=[u for u in g.get(v,[])if u not in seen or seen.append(u)]\n    return seen`,
-    `caesar=lambda s,k:''.join(chr((ord(c)-65+k)%26+65)if c.isupper()else chr((ord(c)-97+k)%26+97)if c.islower()else c for c in s)`,
-    `from itertools import groupby\nrle=lambda s:''.join(f'{c}{len(list(g))}'for c,g in groupby(s))`,
-    `transpose=lambda m:[list(r)for r in zip(*m)]`,
-    `def memoize(fn):\n    c={}\n    return lambda *a:c.setdefault(a,fn(*a))`,
-    `import json\nsafe_load=lambda p:json.load(open(p))if __import__('os').path.exists(p)else{}`,
-    `fizzbuzz=lambda n:[print('FizzBuzz'if i%15==0 else'Fizz'if i%3==0 else'Buzz'if i%5==0 else i)for i in range(1,n+1)]`,
-    `def unique(lst):\n    seen=set()\n    return[x for x in lst if not(x in seen or seen.add(x))]`,
-    `chunk=lambda l,n:[l[i:i+n]for i in range(0,len(l),n)]`,
-    `def deep_get(d,*keys,default=None):\n    for k in keys:d=d.get(k,{})if isinstance(d,dict)else default\n    return d or default`,
-    `import re\nemails=lambda t:re.findall(r'[\\w.+-]+@[\\w-]+\\.[\\w.]+',t)`,
-    `def clamp(v,lo,hi):return max(lo,min(hi,v))`,
-    `debounce=lambda fn,t:(__import__('threading').Timer(t,fn)).start`,
-    `def rotate(matrix):\n    n=len(matrix)\n    for i in range(n):\n        for j in range(i+1,n):matrix[i][j],matrix[j][i]=matrix[j][i],matrix[i][j]\n    for row in matrix:row.reverse()`,
+    'fib=lambda n,a=0,b=1:a if n==0 else fib(n-1,b,a+b)',
+    'is_prime=lambda n:n>1 and all(n%i for i in range(2,n))',
+    'clamp=lambda v,a,b:max(a,min(b,v))',
+    'chunks=lambda l,n:[l[i:i+n]for i in range(0,len(l),n)]',
+    'flat=lambda l:[x for s in l for x in s]',
+    'uniq=lambda l:list(dict.fromkeys(l))',
+    'rev=lambda s:s[::-1]',
+    'palindrome=lambda s:s==s[::-1]',
+    'transpose=lambda m:list(zip(*m))',
+    'merge=lambda a,b:{**a,**b}',
+    'sign=lambda x:(x>0)-(x<0)',
+    'digits=lambda n:[int(d)for d in str(abs(n))]',
+    'gcd=lambda a,b:b and gcd(b,a%b)or a',
+    'lcm=lambda a,b:a*b//gcd(a,b)',
+    'factors=lambda n:[i for i in range(1,n+1)if n%i==0]',
+    'xor_bytes=lambda a,b:bytes(x^y for x,y in zip(a,b))',
+    'hamming=lambda a,b:sum(x!=y for x,y in zip(a,b))',
+    'camel=lambda s:"".join(w.title()for w in s.split())',
+    'snake=lambda s:s.replace(" ","_").lower()',
+    'rot13=lambda s:s.translate(str.maketrans("A-Za-z","N-ZA-Mn-za-m"))',
+    'bin_to_int=lambda b:int(b,2)',
+    'int_to_bin=lambda n:bin(n)[2:]',
+    'caesar=lambda s,k:"".join(chr((ord(c)-97+k)%26+97)if c.islower()else c for c in s)',
+    'nth=lambda l,n:l[n%len(l)]',
+    'most_common=lambda l:max(set(l),key=l.count)',
+    'flatten=lambda l:sum(l,[])',
+    'zip_dicts=lambda k,v:dict(zip(k,v))',
+    'running_sum=lambda l:[sum(l[:i+1])for i in range(len(l))]',
+    'mean=lambda l:sum(l)/len(l)',
+    'median=lambda l:sorted(l)[len(l)//2]',
   ];
 
   function randomPython() {
@@ -106,30 +116,38 @@
   }
 
   // ── HANDLE KEYSTROKE ──
+  // Every keypress immediately commits a Python snippet to the terminal.
+  // Every KEY_FLUSH_AT presses the entire line buffer is wiped so the
+  // extension stays lightweight and doesn't accumulate stale history.
   function handleKeystroke(key) {
-    if (key === 'Backspace') {
-      typingBuffer = typingBuffer.slice(0, -1);
-      currentSnippet = typingBuffer.length > 0 ? randomPython() : '';
-    } else {
-      wpmTimestamps.push(Date.now());
-      typingBuffer += key;
-      currentSnippet = randomPython();
-      bumpIntensity();
+    if (key === 'Backspace' || key === 'Enter' || key === 'Shift' ||
+        key === 'Control'   || key === 'Alt'   || key === 'Meta'  ||
+        key === 'Tab'       || key === 'CapsLock') return;
+
+    keyPressCount++;
+    wpmTimestamps.push(Date.now());
+    bumpIntensity();
+
+    // Flush all lines every KEY_FLUSH_AT keypresses
+    if (keyPressCount % KEY_FLUSH_AT === 0) {
+      lines.length = 0;
+      if (terminalLines) terminalLines.innerHTML = '';
     }
+
+    // Auto-commit a fresh snippet immediately
+    const snippet = randomPython();
+    addEventLine('PY', snippet);
+
+    // Keep the active input line clear — nothing is "pending"
+    typingBuffer   = '';
+    currentSnippet = '';
     updateCurrentInput();
   }
 
   // ── HANDLE PAGE EVENT ──
+  // Enter is now a no-op for key commits (auto-committed above).
   function handlePageEvent(eventType, detail) {
-    if (eventType === 'KEY' && detail === 'Enter') {
-      if (typingBuffer.length > 0) {
-        addEventLine('PY', currentSnippet);
-        typingBuffer = '';
-        currentSnippet = '';
-        updateCurrentInput();
-        bumpIntensity();
-      }
-    }
+    void eventType; void detail;
   }
 
   // ── ADD EVENT LINE ──
@@ -217,11 +235,11 @@
 
     // Green lighting matching Imperium aesthetic
     scene.add(new THREE.AmbientLight(0x00ff66, 0.3));
-    const pl1 = new THREE.PointLight(0x00ff66, 1, 20);
-    pl1.position.set(2, 2, 3);
+    const pl1 = new THREE.PointLight(0x00ff66, 1.5, 10);
+    pl1.position.set(1, -1, 2);
     scene.add(pl1);
-    const pl2 = new THREE.PointLight(0x00ff44, 1, 20);
-    pl2.position.set(-2, -1, 2);
+    const pl2 = new THREE.PointLight(0x00ff44, 1.5, 10);
+    pl2.position.set(-1, -1, 2);
     scene.add(pl2);
 
     // Rotation speed driven by typing intensity
@@ -256,7 +274,7 @@
             emissive: 0x00aa44,
             emissiveIntensity: 1,
             transparent: true,
-            opacity: 0.8,
+            opacity: 0.95,
             side: THREE.DoubleSide,
           });
 
