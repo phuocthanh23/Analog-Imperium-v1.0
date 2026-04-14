@@ -280,9 +280,12 @@
 
         scene.add(root);
 
-        // Dismiss preloading screen
+        // Dismiss preloading screen, then reveal modules top-to-bottom
         const loadEl = document.getElementById('ai-loading');
-        if (loadEl) loadEl.classList.add('hidden');
+        if (loadEl) {
+          loadEl.classList.add('hidden');
+          revealModulesSequentially();
+        }
 
         // Animation loop — Y-axis rotation + emissive breathing pulse
         let pulse = 0;
@@ -461,53 +464,53 @@
     // r=primary, s/sm/sd=sphere gradient stops, land/line=continent, grid/scan=grid+sweep,
     // rim0/rim1/rimLine=edge glow, ring0/ring1=equatorial rings, polar/polLine=ice caps
     var PLANETS = [
-      { name:'TERRA',    terrain:'earth',    moon:false,
-        r:[255,165,0],  s:[55,22,0],   sm:[28,10,0],  sd:[10,3,0],
-        ocean:[35,14,0],    land:[100,40,0],  line:[255,175,0],
-        polar:[255,210,130],polLine:[255,225,160],
-        grid:[255,165,0],   scan:[255,190,0],
-        rim0:[255,145,0],   rim1:[255,165,0], rimLine:[255,175,0],
-        ring0:[255,150,0],  ring1:[255,130,0] },
+      { name:'TERRA',      terrain:'earth',    moon:false,
+        r:[200,120,55],  s:[65,32,12],  sm:[38,18,7],   sd:[14,7,3],
+        ocean:[28,18,8],    land:[115,55,22],  line:[200,120,55],
+        polar:[205,175,140],polLine:[218,190,158],
+        grid:[190,110,48],  scan:[210,130,65],
+        rim0:[170,90,35],   rim1:[200,120,55], rimLine:[215,132,65],
+        ring0:[190,108,48], ring1:[165,88,32] },
 
-      { name:'VERDANIA', terrain:'alien',    moon:false,
-        r:[0,255,100],  s:[0,35,12],   sm:[0,18,6],   sd:[0,6,2],
-        ocean:[0,20,10],    land:[0,80,30],   line:[0,255,100],
-        polar:[180,255,210],polLine:[200,255,225],
-        grid:[0,230,90],    scan:[0,220,100],
-        rim0:[0,200,80],    rim1:[0,230,100], rimLine:[0,240,110],
-        ring0:[0,210,90],   ring1:[0,180,70] },
+      { name:'CADIA',      terrain:'earth',    moon:false,
+        r:[65,165,225],  s:[12,45,85],  sm:[7,28,55],   sd:[3,12,28],
+        ocean:[10,45,95],   land:[38,105,45],  line:[75,195,120],
+        polar:[218,235,250],polLine:[230,243,255],
+        grid:[52,155,215],  scan:[68,178,238],
+        rim0:[42,132,198],  rim1:[65,165,225], rimLine:[82,188,245],
+        ring0:[55,155,215], ring1:[40,132,198] },
 
-      { name:'ROSEA',    terrain:'banded',   moon:true,  moonRgb:[220,180,235],
-        r:[255,80,160], s:[50,0,30],   sm:[30,0,18],  sd:[12,0,7],
-        ocean:[40,0,25],    land:[155,20,90], line:[255,120,185],
-        polar:[255,200,232],polLine:[255,215,238],
-        grid:[255,100,170], scan:[255,110,180],
-        rim0:[255,60,140],  rim1:[255,90,165],rimLine:[255,110,175],
-        ring0:[255,80,160], ring1:[255,60,140] },
+      { name:'FENRIS',     terrain:'craters',  moon:true,  moonRgb:[180,195,215],
+        r:[95,135,168],  s:[22,32,48],  sm:[13,20,30],  sd:[5,8,13],
+        ocean:[15,22,35],   land:[55,75,95],   line:[105,148,178],
+        polar:[198,215,232],polLine:[212,228,242],
+        grid:[85,122,152],  scan:[100,142,175],
+        rim0:[65,100,130],  rim1:[95,135,168], rimLine:[112,152,185],
+        ring0:[85,125,158], ring1:[65,100,130] },
 
-      { name:'VIOLUM',   terrain:'craters',  moon:true,  moonRgb:[185,145,245],
-        r:[180,0,255],  s:[26,0,52],   sm:[14,0,30],  sd:[6,0,12],
-        ocean:[20,0,42],    land:[90,0,165],  line:[205,55,255],
-        polar:[215,175,255],polLine:[225,190,255],
-        grid:[175,35,245],  scan:[195,55,255],
-        rim0:[150,0,225],   rim1:[180,25,250],rimLine:[205,55,255],
-        ring0:[165,15,235], ring1:[135,0,205] },
+      { name:'CATACHAN',   terrain:'alien',    moon:false,
+        r:[28,175,42],   s:[5,42,10],   sm:[3,26,6],    sd:[1,11,3],
+        ocean:[4,32,12],    land:[18,105,28],  line:[38,205,58],
+        polar:[175,228,188],polLine:[195,240,208],
+        grid:[22,162,38],   scan:[32,188,52],
+        rim0:[14,140,28],   rim1:[28,175,42],  rimLine:[38,198,56],
+        ring0:[22,158,36],  ring1:[14,135,26] },
 
-      { name:'IGNIS',    terrain:'volcanic', moon:false,
-        r:[255,80,0],   s:[50,10,0],   sm:[28,5,0],   sd:[10,2,0],
-        ocean:[40,8,0],     land:[160,35,0],  line:[255,120,30],
-        polar:[255,180,100],polLine:[255,198,125],
-        grid:[255,90,0],    scan:[255,110,10],
-        rim0:[220,60,0],    rim1:[255,85,0],  rimLine:[255,115,20],
-        ring0:[255,80,0],   ring1:[220,60,0] },
+      { name:'CALTH',      terrain:'earth',    moon:false,
+        r:[195,95,128],  s:[48,18,28],  sm:[28,10,16],  sd:[11,4,7],
+        ocean:[33,13,20],   land:[125,52,76],  line:[205,110,142],
+        polar:[228,192,208],polLine:[238,208,222],
+        grid:[185,88,118],  scan:[200,105,135],
+        rim0:[162,68,98],   rim1:[195,95,128], rimLine:[210,110,142],
+        ring0:[185,88,118], ring1:[160,68,98] },
 
-      { name:'LUMINA',   terrain:'crystal',  moon:false,
-        r:[220,60,255], s:[30,0,55],   sm:[16,0,30],  sd:[7,0,12],
-        ocean:[25,0,45],    land:[120,0,200], line:[235,105,255],
-        polar:[235,195,255],polLine:[245,210,255],
-        grid:[215,55,248],  scan:[230,85,255],
-        rim0:[195,30,238],  rim1:[220,60,252],rimLine:[235,95,255],
-        ring0:[220,55,252], ring1:[190,30,232] },
+      { name:'NECROMUNDA', terrain:'volcanic', moon:false,
+        r:[218,185,75],  s:[52,42,10],  sm:[32,26,6],   sd:[13,10,3],
+        ocean:[35,28,8],    land:[128,105,28], line:[218,185,75],
+        polar:[238,222,168],polLine:[245,232,182],
+        grid:[205,172,62],  scan:[222,192,82],
+        rim0:[182,152,48],  rim1:[218,185,75], rimLine:[228,198,85],
+        ring0:[208,172,62], ring1:[185,150,48] },
     ];
 
     // Earth continent outlines
@@ -543,18 +546,18 @@
     // Settlement hotspots per planet: [lat, lon, relativeSize 0-1]
     // Drawn as pulsing glow blobs on the globe surface
     var SETTLEMENTS = [
-      // 0 TERRA — Human: Europe, E.Asia, N.America, S.Asia, Russia, S.America, Africa
+      // 0 TERRA — Segmentum Solar: Europe, E.Asia, N.America, S.Asia, Russia, S.America, Africa
       [[51, 10,0.90],[35,108,1.00],[40,-95,0.80],[22,78,0.85],[55,37,0.65],[-8,-52,0.50],[5,22,0.45]],
-      // 1 VERDANIA — Xenos: equatorial megacities + temperate groves
-      [[0,0,1.00],[5,120,0.85],[-5,-70,0.80],[45,30,0.60],[20,-160,0.70]],
-      // 2 ROSEA — Floatborn: polar vortex cities + equatorial drift ring
-      [[75,0,0.85],[80,180,0.75],[-75,90,0.85],[-78,-90,0.70],[0,50,1.00],[0,-130,0.90]],
-      // 3 VIOLUM — Shadecrawler: deep crater complexes
-      [[20,60,0.90],[-35,-120,0.80],[55,-30,0.88],[-10,170,0.70],[5,-60,0.95],[72,130,0.55]],
-      // 4 IGNIS — Ashwalker: volcanic equatorial belt
-      [[0,0,0.82],[5,72,0.75],[-3,144,0.68],[8,-72,0.75],[-5,-144,0.65],[20,36,0.52]],
-      // 5 LUMINA — Crystalmind: geometric lattice nodes
-      [[72,0,0.80],[72,144,0.78],[36,36,0.92],[36,180,0.90],[0,0,1.00],[0,144,0.95],[-36,72,0.85],[-72,0,0.75]],
+      // 1 CADIA — Cadian Gate fortresses: pylons and defence lines across Cadia Secundus
+      [[53,22,1.00],[47,15,0.90],[55,30,0.85],[48,8,0.80],[40,25,0.70],[60,18,0.65],[35,12,0.60]],
+      // 2 FENRIS — Space Wolves: The Fang + scattered holds across Asaheim and the Sea of Russ
+      [[65,-20,0.85],[70,80,0.75],[-60,45,0.70],[50,160,0.65],[75,-100,0.80],[30,-60,0.55]],
+      // 3 CATACHAN — Jungle outposts: scattered survival camps across the death world
+      [[-8,125,0.75],[5,-35,0.85],[-15,68,0.70],[18,-110,0.65],[-25,-75,0.80],[10,40,0.60]],
+      // 4 CALTH — Ultramar cities: civilised world before the Word Bearers assault
+      [[30,22,0.85],[10,-18,0.90],[-5,55,0.80],[40,-35,0.75],[22,78,0.85],[-20,30,0.70]],
+      // 5 NECROMUNDA — Hive cities: Hive Primus, Hive Secundus, Hive Orlock, Temenos, Arcos
+      [[35,28,1.00],[28,35,0.95],[42,22,0.90],[25,42,0.85],[38,15,0.80],[45,30,0.75],[20,50,0.70]],
     ];
 
     var rot = 0;
@@ -1387,6 +1390,30 @@
   }
 
   if (geneTestBtn) geneTestBtn.addEventListener('click', runGeneTest);
+
+  // ── MODULE SEQUENTIAL REVEAL ──
+  // Called once the preloader fades. Modules reveal top-to-bottom, each
+  // showing an "initializing..." overlay for 500 ms before content appears.
+  function revealModulesSequentially() {
+    var schedule = [
+      { ids: ['mod-globe'],            delay: 0    },
+      { ids: ['mod-dna', 'mod-logo'],  delay: 600  },
+      { ids: ['mod-terminal'],         delay: 1200 },
+    ];
+    schedule.forEach(function (entry) {
+      setTimeout(function () {
+        entry.ids.forEach(function (id) {
+          var mod     = document.getElementById(id);
+          var overlay = mod && mod.querySelector('.mod-init-overlay');
+          if (!overlay) return;
+          setTimeout(function () {
+            overlay.classList.add('fading');
+            setTimeout(function () { overlay.remove(); }, 400);
+          }, 500);
+        });
+      }, entry.delay);
+    });
+  }
 
   // Guard against double-boot
   let booted = false;

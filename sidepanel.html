@@ -10,6 +10,7 @@
 
   <!-- ── PRELOADING SCREEN (Imperium style, fades out after GLB loads) ── -->
   <div id="ai-loading">
+    <img class="ai-aquila" src="aquila.svg" alt="">
     <span>INITIALIZING</span>
     <div class="ai-loading-bar-wrap">
       <div class="ai-loading-bar"></div>
@@ -54,23 +55,24 @@
           <span id="cp-planet-label">TERRA</span>
         </div>
         <div class="cp-module-body cp-globe-body">
+          <div class="mod-init-overlay"><span>&gt;&nbsp;initializing...</span></div>
 
           <div class="cp-globe-main">
 
             <!-- Left planet buttons: slots 0-2 -->
             <div class="cp-planet-btns">
-              <button class="cp-planet-btn active" data-planet="0" style="--pc:#ff9900" title="TERRA"></button>
-              <button class="cp-planet-btn"         data-planet="1" style="--pc:#00ff64" title="VERDANIA"></button>
-              <button class="cp-planet-btn"         data-planet="2" style="--pc:#ff50a0" title="ROSEA ◎"></button>
+              <button class="cp-planet-btn active" data-planet="0" style="--pc:#c87837" title="TERRA"></button>
+              <button class="cp-planet-btn"         data-planet="1" style="--pc:#41a5e1" title="CADIA"></button>
+              <button class="cp-planet-btn"         data-planet="2" style="--pc:#5f8aa8" title="FENRIS ◎"></button>
             </div>
 
             <canvas class="cp-globe-canvas"></canvas>
 
             <!-- Right planet buttons: slots 3-5 -->
             <div class="cp-planet-btns">
-              <button class="cp-planet-btn" data-planet="3" style="--pc:#b400ff" title="VIOLUM ◎"></button>
-              <button class="cp-planet-btn" data-planet="4" style="--pc:#ff5000" title="IGNIS"></button>
-              <button class="cp-planet-btn" data-planet="5" style="--pc:#dc3cff" title="LUMINA"></button>
+              <button class="cp-planet-btn" data-planet="3" style="--pc:#1caf2a" title="CATACHAN"></button>
+              <button class="cp-planet-btn" data-planet="4" style="--pc:#c35f80" title="CALTH"></button>
+              <button class="cp-planet-btn" data-planet="5" style="--pc:#daba4b" title="NECROMUNDA"></button>
             </div>
 
           </div><!-- /.cp-globe-main -->
@@ -97,6 +99,7 @@
             <div class="cp-mod-line"></div>
           </div>
           <div class="cp-module-body cp-geneseed-body">
+            <div class="mod-init-overlay"><span>&gt;&nbsp;initializing...</span></div>
             <div id="dna-container"></div>
             <div class="cp-speed-panel">
               <div class="cp-speed-node" id="cp-speed-node">NODE · UNKNOWN</div>
@@ -126,6 +129,7 @@
             <div class="cp-mod-line"></div>
           </div>
           <div class="cp-module-body cp-logo-body">
+            <div class="mod-init-overlay"><span>&gt;&nbsp;initializing...</span></div>
             <div id="logo-container"></div>
             <div class="cp-logo-label" id="cp-signum-label">AVE·IMPERATOR</div>
           </div>
@@ -141,6 +145,7 @@
           <span class="cp-live-dot">&#9679; LIVE</span>
         </div>
         <div class="cp-module-body cp-terminal-body">
+          <div class="mod-init-overlay"><span>&gt;&nbsp;initializing...</span></div>
           <div class="cp-terminal-lines"></div>
           <!-- Active input line — always visible at bottom, committed on Enter -->
           <div class="cp-current-input">
