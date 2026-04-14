@@ -3,16 +3,30 @@
 const urlInput  = document.getElementById('codex-url');
 const saveBtn   = document.getElementById('btn-save');
 const statusEl  = document.getElementById('status');
+const modelRadios = document.querySelectorAll('input[name="signumModel"]');
 
 // Load saved values on open
-chrome.storage.sync.get('codexUrl', function (data) {
+chrome.storage.sync.get(['codexUrl', 'signumModel'], function (data) {
   if (urlInput) urlInput.value = data.codexUrl || '';
+
+  // Set the correct radio button for signum model
+  const savedModel = data.signumModel || 'imperium';
+  modelRadios.forEach(function (radio) {
+    radio.checked = (radio.value === savedModel);
+  });
 });
 
 // Save on button click
 saveBtn.addEventListener('click', function () {
   const raw = urlInput.value.trim();
-  chrome.storage.sync.set({ codexUrl: raw }, function () {
+
+  // Read selected signum model
+  let selectedModel = 'imperium';
+  modelRadios.forEach(function (radio) {
+    if (radio.checked) selectedModel = radio.value;
+  });
+
+  chrome.storage.sync.set({ codexUrl: raw, signumModel: selectedModel }, function () {
     statusEl.classList.add('visible');
     setTimeout(function () { statusEl.classList.remove('visible'); }, 2000);
   });

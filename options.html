@@ -102,6 +102,57 @@
       background: linear-gradient(to right, rgba(0, 255, 65, 0.15), transparent);
     }
 
+    /* Signum model selector */
+    .model-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .model-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      padding: 8px 10px;
+      border: 1px solid rgba(0, 255, 65, 0.12);
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .model-option:hover {
+      border-color: rgba(0, 255, 65, 0.4);
+      background: rgba(0, 255, 65, 0.04);
+    }
+
+    .model-option input[type="radio"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 10px;
+      height: 10px;
+      border: 1px solid rgba(0, 255, 65, 0.5);
+      flex-shrink: 0;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .model-option input[type="radio"]:checked {
+      border-color: #00ff41;
+      background: #00ff41;
+      box-shadow: 0 0 6px rgba(0, 255, 65, 0.8);
+    }
+
+    .model-option-label {
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: rgba(0, 255, 65, 0.7);
+      text-transform: uppercase;
+    }
+
+    .model-option input[type="radio"]:checked + .model-option-label {
+      color: #00ff41;
+      text-shadow: 0 0 6px rgba(0, 255, 65, 0.6);
+    }
+
     .btn-row {
       display: flex;
       align-items: center;
@@ -158,6 +209,30 @@
         </div>
         <input class="setting-input" id="codex-url" type="text"
                placeholder="https://example.com" spellcheck="false" autocomplete="off" />
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="setting-group">
+        <div class="setting-label">Signum — 3D Object</div>
+        <div class="setting-desc">
+          The hologram model displayed in the SIGNUM module.<br>
+          Change takes effect on next panel open.
+        </div>
+        <div class="model-options">
+          <label class="model-option">
+            <input type="radio" name="signumModel" value="imperium" id="model-imperium" />
+            <span class="model-option-label">Imperium Aquila Signum</span>
+          </label>
+          <label class="model-option">
+            <input type="radio" name="signumModel" value="bolter" id="model-bolter" />
+            <span class="model-option-label">Astartes Bolter</span>
+          </label>
+          <label class="model-option">
+            <input type="radio" name="signumModel" value="templars" id="model-templars" />
+            <span class="model-option-label">Black Templars Cross</span>
+          </label>
+        </div>
       </div>
 
       <div class="divider"></div>

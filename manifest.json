@@ -24,7 +24,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["logo.glb"],
+      "resources": ["logo.glb", "3d_objects/40k_bolter.glb", "3d_objects/black_templars_cross.glb"],
       "matches": ["<all_urls>"]
     }
   ],

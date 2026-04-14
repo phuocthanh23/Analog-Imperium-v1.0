@@ -191,7 +191,9 @@
   // ── SIGNUM 3D — Imperium logo with THREE.js ──
   // Returns { setSpeed(s) } so intensity decay can drive rotation speed.
   // Speed arg maps Analog Terminal's 0.6–2.1 range → rotation rate.
-  function initLogo3D() {
+  // glbPath: relative path to the GLB file (defaults to 'logo.glb')
+  function initLogo3D(glbPath) {
+    glbPath = glbPath || 'logo.glb';
     const container = document.getElementById('logo-container');
     if (!container) return { setSpeed: function () {} };
 
@@ -214,10 +216,10 @@
 
     // Green lighting matching Imperium aesthetic
     scene.add(new THREE.AmbientLight(0x00ff66, 0.3));
-    const pl1 = new THREE.PointLight(0x00ff66, 2, 20);
+    const pl1 = new THREE.PointLight(0x00ff66, 1, 20);
     pl1.position.set(2, 2, 3);
     scene.add(pl1);
-    const pl2 = new THREE.PointLight(0x00ff44, 1.5, 20);
+    const pl2 = new THREE.PointLight(0x00ff44, 1, 20);
     pl2.position.set(-2, -1, 2);
     scene.add(pl2);
 
@@ -227,7 +229,7 @@
 
     const loader = new THREE.GLTFLoader();
     loader.load(
-      chrome.runtime.getURL('logo.glb'),
+      chrome.runtime.getURL(glbPath),
       function (gltf) {
         const root = gltf.scene;
 
@@ -235,7 +237,7 @@
         const box    = new THREE.Box3().setFromObject(root);
         const center = box.getCenter(new THREE.Vector3());
         const size   = box.getSize(new THREE.Vector3());
-        const scale  = 5.04 / Math.max(size.x, size.y, size.z); // 3.0 × 1.4 × 1.2 = +68%
+        const scale  = 5.04 / Math.max(size.x, size.y, size.z);
         root.position.sub(center.multiplyScalar(scale));
         root.scale.setScalar(scale);
 
@@ -247,9 +249,9 @@
           child.material = new THREE.MeshStandardMaterial({
             color: 0x003311,
             emissive: 0x00aa44,
-            emissiveIntensity: 0.4,
+            emissiveIntensity: 1,
             transparent: true,
-            opacity: 0.55,
+            opacity: 0.8,
             side: THREE.DoubleSide,
           });
 
@@ -257,11 +259,11 @@
           const glow1 = new THREE.Mesh(
             child.geometry,
             new THREE.MeshBasicMaterial({
-              color: 0x00ff44, transparent: true, opacity: 0.08,
+              color: 0x00ff44, transparent: true, opacity: 0.02,
               side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false,
             })
           );
-          glow1.scale.setScalar(1.08);
+          glow1.scale.setScalar(1.01);
           child.add(glow1);
 
           // Outer glow layer
@@ -272,7 +274,7 @@
               side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false,
             })
           );
-          glow2.scale.setScalar(1.18);
+          glow2.scale.setScalar(1.02);
           child.add(glow2);
         });
 
@@ -282,12 +284,12 @@
         const loadEl = document.getElementById('ai-loading');
         if (loadEl) loadEl.classList.add('hidden');
 
-        // Animation loop — rotation + emissive breathing pulse
+        // Animation loop — Y-axis rotation + emissive breathing pulse
         let pulse = 0;
         function animate() {
           requestAnimationFrame(animate);
           pulse += 0.02;
-          root.rotation.y -= rotSpeed;
+          root.rotation.y += rotSpeed;
           root.traverse(function (child) {
             if (child.isMesh && child.material && child.material.emissiveIntensity !== undefined) {
               child.material.emissiveIntensity = 0.3 + Math.sin(pulse) * 0.15;
@@ -345,14 +347,32 @@
     dnaContainer.appendChild(renderer.domElement);
 
     const scene  = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(42, W / H, 0.01, 1000);
+    const camera = new THREE.PerspectiveCamera(45, W / H, 0.01, 1000);
     camera.position.set(0, 0, 9);
 
+    // Dynamically fit the helix inside the canvas regardless of size/aspect ratio.
+    // Uses literal helix dimensions (HELIX_H=5.5, HELIX_R=1.1) so this is safe
+    // to call before those consts are declared further below.
+    function fitDNA(w, h) {
+      if (!w || !h) return;
+      const aspect = w / h;
+      const camZ   = camera.position.z;
+      const halfH  = (5.5 / 2) * 1.22;  // HELIX_H / 2 + 22% padding
+      const halfW  = 1.1 * 1.65;         // HELIX_R + 65% padding (rotation sweep)
+      const fovV   = 2 * Math.atan(halfH / camZ) * (180 / Math.PI);
+      const fovH   = 2 * Math.atan(halfW / (camZ * aspect)) * (180 / Math.PI);
+      camera.fov   = Math.max(fovV, fovH);
+      camera.aspect = aspect;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    }
+    fitDNA(W, H);
+
     scene.add(new THREE.AmbientLight(0x00ff66, 0.35));
-    const pl1 = new THREE.PointLight(0x00ff44, 2.5, 30);
+    const pl1 = new THREE.PointLight(0xffd580, 1, 50);
     pl1.position.set(3, 4, 5);
     scene.add(pl1);
-    const pl2 = new THREE.PointLight(0x00cc33, 1.2, 25);
+    const pl2 = new THREE.PointLight(0x00cc33, 1, 25);
     pl2.position.set(-3, -2, 3);
     scene.add(pl2);
 
@@ -364,9 +384,9 @@
     const HELIX_R     = 1.1;
     const HELIX_H     = 5.5;
 
-    const matA = new THREE.MeshStandardMaterial({ color: 0x00ff44, emissive: 0x00bb44, emissiveIntensity: 0.5 });
-    const matB = new THREE.MeshStandardMaterial({ color: 0x00dd33, emissive: 0x006622, emissiveIntensity: 0.4 });
-    const matC = new THREE.MeshStandardMaterial({ color: 0x00ff66, emissive: 0x003311, emissiveIntensity: 0.3, transparent: true, opacity: 0.75 });
+    const matA = new THREE.MeshStandardMaterial({ color: 0x00ff44, emissive: 0x00ff66, emissiveIntensity: 1,transparent: true, opacity: 0.4  });
+    const matB = new THREE.MeshStandardMaterial({ color: 0x00ff44, emissive: 0x00ff66, emissiveIntensity: 1, transparent: true, opacity: 0.75  });
+    const matC = new THREE.MeshStandardMaterial({ color: 0x00ff66, emissive: 0x003311, emissiveIntensity: 0.3, transparent: true, opacity: 0.4 });
     const sphereGeo = new THREE.SphereGeometry(0.13, 10, 10);
 
     // Build strands + base-pair connectors
@@ -426,13 +446,7 @@
 
     if (typeof ResizeObserver !== 'undefined') {
       new ResizeObserver(function () {
-        const w = dnaContainer.clientWidth;
-        const h = dnaContainer.clientHeight;
-        if (w && h) {
-          camera.aspect = w / h;
-          camera.updateProjectionMatrix();
-          renderer.setSize(w, h);
-        }
+        fitDNA(dnaContainer.clientWidth, dnaContainer.clientHeight);
       }).observe(dnaContainer);
     }
 
@@ -1080,12 +1094,25 @@
 
     let i = 0;
 
+    const SIGNUM_MODELS = {
+      'imperium': { glb: 'logo.glb',                            label: 'AVE·IMPERATOR' },
+      'bolter':   { glb: '3d_objects/40k_bolter.glb',           label: 'BOLT·GUN·PRIME' },
+      'templars': { glb: '3d_objects/black_templars_cross.glb',  label: 'DEUS·VULT' },
+    };
+
     function showNext() {
       if (i >= bootLines.length) {
-        // Boot complete — start 3D logo, DNA helix, and globe
-        logo3d = initLogo3D();
-        dna    = initDNA();
-        initGlobe();
+        // Boot complete — read chosen signum model then start 3D logo, DNA helix, and globe
+        chrome.storage.sync.get('signumModel', function (data) {
+          const modelKey = data.signumModel || 'imperium';
+          const model    = SIGNUM_MODELS[modelKey] || SIGNUM_MODELS['imperium'];
+          // Update the label beneath the Signum module
+          const labelEl  = document.getElementById('cp-signum-label');
+          if (labelEl) labelEl.textContent = model.label;
+          logo3d = initLogo3D(model.glb);
+          dna    = initDNA();
+          initGlobe();
+        });
         return;
       }
       const entry = bootLines[i];

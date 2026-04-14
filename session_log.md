@@ -5,8 +5,42 @@
 **Working Directory:** `Analog-Imperium-v1.0/`
 **Git Branch:** `main`
 **Last Commits:**
-- `c08a8d8` First version
-- `2c6a293` Initial commit
+- `9273af7` feat: options page for Open Codex URL + open as new tab
+- `8c1fbcd` fix: resolve speed test network errors
+- `5daabd9` feat: UI overhaul, 3D DNA helix, speed test, layout fixes
+
+---
+
+## Session Changes — Part 3 (2026-04-14)
+
+### Layout & Naming
+- **Gene-seed + Signum row** — height changed from `20vh` to fixed `180px` for consistent sizing regardless of viewport
+- **Signum module** — renamed from `SIGNUM·3D` to `SIGNUM` (header title + HTML comments)
+
+### Signum — Multi-Model Support
+- **`3d_objects/` folder** — two new GLB files added: `40k_bolter.glb`, `black_templars_cross.glb`
+- **`manifest.json`** — added both new GLBs to `web_accessible_resources`
+- **`sidepanel.js`** — `initLogo3D(glbPath)` now accepts a path parameter; defaults to `'logo.glb'`
+- **`SIGNUM_MODELS` map** — defined in boot sequence, maps model key → `{ glb, label }`:
+  - `'imperium'` → `logo.glb` / `AVE·IMPERATOR`
+  - `'bolter'`   → `3d_objects/40k_bolter.glb` / `BOLT·GUN·PRIME`
+  - `'templars'` → `3d_objects/black_templars_cross.glb` / `DEUS·VULT`
+- **Boot sequence** — reads `signumModel` from `chrome.storage.sync`, loads correct GLB, updates label
+- **`sidepanel.html`** — `cp-logo-label` div given `id="cp-signum-label"` so JS can update it
+- **Dynamic label** — label below the Signum module updates to match the selected model on every panel open
+
+### Signum — Options Page Selector
+- **`options.html`** — new **SIGNUM — 3D OBJECT** setting group with three styled radio buttons (cyberpunk theme, green glow on selected)
+- **`options.js`** — loads `signumModel` from storage on open; saves both `codexUrl` and `signumModel` together on SAVE SETTINGS
+
+### Signum — Rotation
+- Changed rotation direction to **clockwise** (`root.rotation.y -= rotSpeed` → `+= rotSpeed`)
+- Changed rotation axis to **Y axis** (spins left/right, showing the model face-on)
+
+### Bug Fixes
+- **Event Stream flexible height** — `#mod-terminal` changed from `flex: 0 0 40vh` to `flex: 1` (fills all remaining panel space)
+- **DNA 3D scaling** — `fitDNA()` uses literal values `5.5` and `1.1` instead of `HELIX_H`/`HELIX_R` constants to avoid Temporal Dead Zone crash
+- **All 3D objects disappeared** — root cause was TDZ `ReferenceError` in `initDNA()` crashing the boot chain; fixed by the literal-value change above
 
 ---
 

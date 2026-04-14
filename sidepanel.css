@@ -192,9 +192,9 @@ html, body {
   min-height: 0;
 }
 
-/* Event Stream fixed at 40% of viewport height */
+/* Event Stream fills remaining space */
 #mod-terminal {
-  flex: 0 0 40vh;
+  flex: 1;
   min-height: 0;
 }
 
@@ -263,12 +263,12 @@ html, body {
   min-height: 0;
 }
 
-/* ── MODULE ROW (side-by-side) — 20% of viewport height ── */
+/* ── MODULE ROW (side-by-side) — fixed 180px ── */
 .cp-module-row {
   display: flex;
   flex-direction: row;
   gap: 8px;
-  flex: 0 0 20vh;
+  flex: 0 0 180px;
   min-height: 0;
 }
 
