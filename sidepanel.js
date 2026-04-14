@@ -540,6 +540,23 @@
       [-10,25,0.65],[40,-130,0.8],[-25,170,0.5],[5,-65,0.9],[50,45,0.7],
     ];
 
+    // Settlement hotspots per planet: [lat, lon, relativeSize 0-1]
+    // Drawn as pulsing glow blobs on the globe surface
+    var SETTLEMENTS = [
+      // 0 TERRA — Human: Europe, E.Asia, N.America, S.Asia, Russia, S.America, Africa
+      [[51, 10,0.90],[35,108,1.00],[40,-95,0.80],[22,78,0.85],[55,37,0.65],[-8,-52,0.50],[5,22,0.45]],
+      // 1 VERDANIA — Xenos: equatorial megacities + temperate groves
+      [[0,0,1.00],[5,120,0.85],[-5,-70,0.80],[45,30,0.60],[20,-160,0.70]],
+      // 2 ROSEA — Floatborn: polar vortex cities + equatorial drift ring
+      [[75,0,0.85],[80,180,0.75],[-75,90,0.85],[-78,-90,0.70],[0,50,1.00],[0,-130,0.90]],
+      // 3 VIOLUM — Shadecrawler: deep crater complexes
+      [[20,60,0.90],[-35,-120,0.80],[55,-30,0.88],[-10,170,0.70],[5,-60,0.95],[72,130,0.55]],
+      // 4 IGNIS — Ashwalker: volcanic equatorial belt
+      [[0,0,0.82],[5,72,0.75],[-3,144,0.68],[8,-72,0.75],[-5,-144,0.65],[20,36,0.52]],
+      // 5 LUMINA — Crystalmind: geometric lattice nodes
+      [[72,0,0.80],[72,144,0.78],[36,36,0.92],[36,180,0.90],[0,0,1.00],[0,144,0.95],[-36,72,0.85],[-72,0,0.75]],
+    ];
+
     var rot = 0;
     var moonAngle = 0;
     var uLat = 0, uLon = 0, hasLoc = false;
@@ -878,6 +895,42 @@
       });
     }
 
+    // Draw pulsing settlement glows for the active planet
+    // Must be called inside ctx.save()/clip() so dots stay within the sphere
+    function drawPopulation(ctx, cx, cy, r, pl, now) {
+      var pts = SETTLEMENTS[currentPlanet];
+      pts.forEach(function(s) {
+        var p = proj(s[0], s[1]);
+        if (p.z < 0.02) return; // skip back-facing points
+        var px = cx + p.x * r, py = cy + p.y * r;
+        var depth = p.z;
+        var size  = s[2];
+        // Unique slow pulse per settlement (different phase per lat/lon)
+        var pulse = 0.70 + 0.30 * Math.sin(now * 0.0009 + s[0] * 0.15 + s[1] * 0.07);
+
+        // Soft outer glow
+        var glowR = r * 0.092 * size;
+        var glow = ctx.createRadialGradient(px, py, 0, px, py, glowR);
+        glow.addColorStop(0,   'rgba(' + pl.r[0] + ',' + pl.r[1] + ',' + pl.r[2] + ',' + (depth * 0.42 * pulse) + ')');
+        glow.addColorStop(0.35,'rgba(' + pl.r[0] + ',' + pl.r[1] + ',' + pl.r[2] + ',' + (depth * 0.16 * pulse) + ')');
+        glow.addColorStop(1,   'rgba(' + pl.r[0] + ',' + pl.r[1] + ',' + pl.r[2] + ',0)');
+        ctx.beginPath();
+        ctx.arc(px, py, glowR, 0, Math.PI * 2);
+        ctx.fillStyle = glow;
+        ctx.fill();
+
+        // Bright core dot
+        var dotR = r * 0.016 * size * pulse;
+        ctx.beginPath();
+        ctx.arc(px, py, dotR, 0, Math.PI * 2);
+        ctx.fillStyle   = 'rgba(' + pl.r[0] + ',' + pl.r[1] + ',' + pl.r[2] + ',' + (depth * 0.92) + ')';
+        ctx.shadowColor = 'rgba(' + pl.r[0] + ',' + pl.r[1] + ',' + pl.r[2] + ',0.85)';
+        ctx.shadowBlur  = 10;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      });
+    }
+
     function drawGlobe() {
       var ctx = globeCanvas.getContext('2d');
       var W = globeCanvas.width, H = globeCanvas.height;
@@ -1008,6 +1061,9 @@
         for (var mla = -90; mla <= 90; mla += 4) mPts.push(proj(mla, mlon));
         gridSegs(ctx, cx, cy, r, mPts, 0.28, pl.grid);
       }
+
+      // ── Settlement population glows ──
+      drawPopulation(ctx, cx, cy, r, pl, now);
 
       // CRT scanlines inside sphere
       for (var sy2 = -r; sy2 < r; sy2 += 3) {

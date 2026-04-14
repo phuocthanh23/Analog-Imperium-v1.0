@@ -5,9 +5,41 @@
 **Working Directory:** `Analog-Imperium-v1.0/`
 **Git Branch:** `main`
 **Last Commits:**
+- (next) feat: globe settlement population glows per planet
+- `28ddd1a` feat: globe drag interaction, brightness boost, label cleanup
 - `4f08b64` feat: multi-model Signum, dynamic label, layout + rotation fixes
 - `9273af7` feat: options page for Open Codex URL + open as new tab
-- `8c1fbcd` fix: resolve speed test network errors
+
+---
+
+## Session Changes — Part 5 (2026-04-14)
+
+### GEO NODE — Settlement Population Glows
+
+Added per-planet settlement hotspot visualisation directly onto the existing canvas globe — no new files, no external libraries, no new button.
+
+**Approach:**
+- `SETTLEMENTS` array defined inside `initGlobe()`: 6 sub-arrays (one per planet), each holding `[lat, lon, relativeSize]` for key settlement locations
+- `drawPopulation(ctx, cx, cy, r, pl, now)` function renders each point using the existing `proj()` function — called inside the `ctx.save()/clip()` sphere block so dots are always clipped to the planet surface
+- Each settlement renders as: soft radial gradient outer glow + bright core dot with canvas shadow bloom
+- Depth-fading: `p.z < 0.02` → fully hidden when rotated to back face; brightness scales with `p.z`
+- Unique slow pulse per settlement: `sin(now * 0.0009 + lat * 0.15 + lon * 0.07)` — ~11 s cycle, different phase per point so they breathe independently
+- Called after terrain + grid, before CRT scanlines — scan sweep passes over the glows for a holographic feel
+
+**Settlement locations per planet:**
+| Planet | Species | Key sites |
+|--------|---------|-----------|
+| TERRA | Human | Europe, E.Asia, N.America, S.Asia, Russia, S.America, Africa |
+| VERDANIA | Xenos | Equatorial Prime, East/West Canopy, North Grove, Pacific Canopy |
+| ROSEA | Floatborn | North/South polar vortices (×2 each), Equatorial Drift Ring (×2) |
+| VIOLUM | Shadecrawler | 6 crater complexes: Alpha–Epsilon + Subterrain Nexus |
+| IGNIS | Ashwalker | Caldera Prime + 4 Magma Belt nodes + 1 Ash Plateau |
+| LUMINA | Crystalmind | 8 lattice nodes: 2 polar rings, 2 mid-rings, 2 equatorial |
+
+**Files changed:**
+| File | Change |
+|------|--------|
+| `sidepanel.js` | Added `SETTLEMENTS` data + `drawPopulation()` + call in draw loop |
 
 ---
 
