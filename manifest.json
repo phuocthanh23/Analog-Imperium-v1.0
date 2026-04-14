@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Cyberpunk terminal with live typing analytics powered by the Imperium of Man 3D sigil.",
   "permissions": ["sidePanel", "geolocation", "tabs"],
-  "host_permissions": ["https://nominatim.openstreetmap.org/*", "https://speed.cloudflare.com/*"],
+  "host_permissions": ["https://nominatim.openstreetmap.org/*", "http://ip-api.com/*", "https://www.speedtest.net/*", "<all_urls>"],
   "action": {
     "default_title": "Open Analog Imperium"
   },

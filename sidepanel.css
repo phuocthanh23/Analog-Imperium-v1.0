@@ -329,14 +329,14 @@ html, body {
 }
 
 .cp-speed-label {
-  font-size: 7px;
+  font-size: 9px;
   color: rgba(0, 255, 65, 0.55);
   font-family: 'Courier New', monospace;
   letter-spacing: 1px;
 }
 
 .cp-speed-value {
-  font-size: 28px;
+  font-size: 18px;
   line-height: 1;
   color: #00ff41;
   font-family: 'Courier New', monospace;

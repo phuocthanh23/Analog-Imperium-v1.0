@@ -1110,54 +1110,119 @@
     });
   }
 
-  // ── GENE-SEED SPEED TEST ──
-  const CF_BASE      = 'https://speed.cloudflare.com';
-  const dlSpeedEl    = document.getElementById('cp-dl-speed');
-  const ulSpeedEl    = document.getElementById('cp-ul-speed');
-  const speedNodeEl  = document.getElementById('cp-speed-node');
-  const geneTestBtn  = document.getElementById('cp-genequality-btn');
+  // ── GENE-SEED SPEED TEST (ISP-aware, Ookla protocol) ──
+  const dlSpeedEl   = document.getElementById('cp-dl-speed');
+  const ulSpeedEl   = document.getElementById('cp-ul-speed');
+  const speedNodeEl = document.getElementById('cp-speed-node');
+  const geneTestBtn = document.getElementById('cp-genequality-btn');
   let   speedTesting = false;
+
+  // Haversine distance between two lat/lon points (km)
+  function haversine(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  // Measure round-trip latency to a speedtest server base URL (ms)
+  async function pingServer(baseUrl) {
+    const url = baseUrl + '/latency.txt?x=' + Date.now();
+    const t0 = performance.now();
+    try {
+      await fetch(url, { cache: 'no-store' });
+      return performance.now() - t0;
+    } catch (e) {
+      return Infinity;
+    }
+  }
 
   async function runGeneTest() {
     if (speedTesting) return;
     speedTesting = true;
-    if (geneTestBtn)  { geneTestBtn.disabled = true; geneTestBtn.textContent = 'DETECTING NODE...'; }
+    if (geneTestBtn)  { geneTestBtn.disabled = true; geneTestBtn.textContent = 'SCANNING ISP...'; }
     if (dlSpeedEl)    dlSpeedEl.textContent = '--';
     if (ulSpeedEl)    ulSpeedEl.textContent = '--';
     if (speedNodeEl)  speedNodeEl.textContent = '';
 
     try {
-      // Detect nearest Cloudflare PoP
-      const meta = await fetch(CF_BASE + '/meta', { cache: 'no-store' })
-        .then(function (r) { return r.json(); })
-        .catch(function () { return null; });
-      const node = (meta && meta.colo) ? meta.colo : 'UNKNOWN';
-      if (speedNodeEl) speedNodeEl.textContent = 'NODE·' + node;
+      // ── 1. Detect ISP + user coordinates ──
+      const ipInfo = await fetch('http://ip-api.com/json?fields=isp,org,lat,lon', { cache: 'no-store' })
+        .then(r => r.json()).catch(() => null);
 
-      // Download test — stream 10 MB, update live
+      const userIsp = ipInfo ? (ipInfo.isp || ipInfo.org || '') : '';
+      const userLat = ipInfo ? parseFloat(ipInfo.lat) : 0;
+      const userLon = ipInfo ? parseFloat(ipInfo.lon) : 0;
+      const ispKey  = userIsp.toLowerCase().split(' ')[0]; // e.g. "viettel"
+
+      if (speedNodeEl) speedNodeEl.textContent = (userIsp.toUpperCase().substring(0, 18)) || 'LOCATING...';
+      if (geneTestBtn) geneTestBtn.textContent = 'LOCATING SERVER...';
+
+      // ── 2. Fetch nearby servers from Ookla ──
+      const servers = await fetch(
+        'https://www.speedtest.net/api/js/servers?engine=js&limit=10',
+        { cache: 'no-store' }
+      ).then(r => r.json()).catch(() => []);
+
+      if (!Array.isArray(servers) || servers.length === 0) throw new Error('No servers returned');
+
+      // ── 3. Sort by distance from user ──
+      const ranked = servers
+        .map(s => ({ ...s, _km: haversine(userLat, userLon, parseFloat(s.lat), parseFloat(s.lon)) }))
+        .sort((a, b) => a._km - b._km);
+
+      // ── 4. Among top 5, prefer ISP-matching server ──
+      const top5     = ranked.slice(0, 5);
+      const ispMatch = ispKey ? top5.find(s => s.sponsor && s.sponsor.toLowerCase().includes(ispKey)) : null;
+
+      // ── 5. Ping top candidates, pick lowest latency ──
+      if (geneTestBtn) geneTestBtn.textContent = 'PINGING NODES...';
+      const pool = ispMatch
+        ? [ispMatch, ...top5.filter(s => s !== ispMatch).slice(0, 2)]
+        : top5.slice(0, 3);
+
+      const results = await Promise.all(pool.map(async s => {
+        const base = s.url.replace('/upload.php', '');
+        return { s, ms: await pingServer(base) };
+      }));
+      results.sort((a, b) => a.ms - b.ms);
+      const best = results[0].s;
+
+      // Show server label (★ if ISP-matched)
+      const tag = (ispMatch && best === ispMatch ? '\u2605 ' : '');
+      const label = tag + (best.sponsor || best.name || 'UNKNOWN').toUpperCase().substring(0, 18);
+      if (speedNodeEl) speedNodeEl.textContent = label;
+
+      // ── 6. Build test URLs (use server's native protocol) ──
+      const baseUrl = best.url.replace('/upload.php', '');
+      const dlUrl   = baseUrl + '/random4000x4000.jpg?x=' + Date.now() + '.0';
+      const ulUrl   = best.url;
+
+      // ── 7. Download test — stream and update live ──
       if (geneTestBtn) geneTestBtn.textContent = 'GENE-SCREENING...';
-      const DL_BYTES = 10000000;
-      const dlStart  = performance.now();
-      const dlResp   = await fetch(CF_BASE + '/__down?bytes=' + DL_BYTES + '&measId=1', { cache: 'no-store' });
-      const reader   = dlResp.body.getReader();
-      let   dlTotal  = 0;
+      const dlStart = performance.now();
+      const dlResp  = await fetch(dlUrl, { cache: 'no-store' });
+      const reader  = dlResp.body.getReader();
+      let dlTotal   = 0;
       while (true) {
-        const chunk = await reader.read();
-        if (chunk.done) break;
-        dlTotal += chunk.value.length;
+        const { done, value } = await reader.read();
+        if (done) break;
+        dlTotal += value.length;
         const t = (performance.now() - dlStart) / 1000;
         if (t > 0.3 && dlSpeedEl) dlSpeedEl.textContent = ((dlTotal * 8) / t / 1e6).toFixed(1);
       }
       const dlFinal = (dlTotal * 8) / ((performance.now() - dlStart) / 1000) / 1e6;
       if (dlSpeedEl) dlSpeedEl.textContent = dlFinal.toFixed(1);
 
-      // Upload test — POST 3 MB of zeroed data
+      // ── 8. Upload test — POST 3 MB ──
       if (geneTestBtn) geneTestBtn.textContent = 'GENE-TITHE UPLINK...';
-      const UL_BYTES = 3000000;
-      const ulData   = new Uint8Array(UL_BYTES);
-      const ulStart  = performance.now();
-      await fetch(CF_BASE + '/__up', { method: 'POST', body: ulData, cache: 'no-store' });
-      const ulFinal  = (UL_BYTES * 8) / ((performance.now() - ulStart) / 1000) / 1e6;
+      const ulData  = new Uint8Array(3000000);
+      const ulStart = performance.now();
+      await fetch(ulUrl, { method: 'POST', body: ulData, cache: 'no-store' });
+      const ulFinal = (ulData.length * 8) / ((performance.now() - ulStart) / 1000) / 1e6;
       if (ulSpeedEl) ulSpeedEl.textContent = ulFinal.toFixed(1);
 
     } catch (err) {
