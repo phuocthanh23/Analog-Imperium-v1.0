@@ -5,9 +5,36 @@
 **Working Directory:** `Analog-Imperium-v1.0/`
 **Git Branch:** `main`
 **Last Commits:**
+- `4f08b64` feat: multi-model Signum, dynamic label, layout + rotation fixes
 - `9273af7` feat: options page for Open Codex URL + open as new tab
 - `8c1fbcd` fix: resolve speed test network errors
-- `5daabd9` feat: UI overhaul, 3D DNA helix, speed test, layout fixes
+
+---
+
+## Session Changes — Part 4 (2026-04-14)
+
+### GEO NODE — Globe Drag Interaction
+- Added mouse drag-to-rotate on the globe canvas
+- Drag sensitivity: one full canvas width = one full rotation
+- Cursor changes to `grab` / `grabbing` on hover / drag
+- Momentum on release: velocity decays at `0.92` friction per frame, then hands back to auto-rotation
+- Touch support: single-finger drag works identically (`touchstart`, `touchmove`, `touchend`)
+- Auto-rotation (`rot += 0.005`) pauses while dragging
+
+### GEO NODE — Globe Brightness
+- Atmosphere halo opacity: `0.18 → 0.45`
+- Ocean base fill: `0.30 → 0.65`
+- Continent land fill: `0.38 → 0.75`
+- Gas-giant bands: `0.28/0.14 → 0.60/0.30`
+- Polar ice caps: `0.22 → 0.55`
+- Lat/lon grid lines: `0.16/0.38/0.12 → 0.35/0.65/0.28`
+- Scan pulse: `0.17 → 0.40`
+- Rim glow: `0.38 → 0.75`
+
+### GEO NODE — Planet Label
+- Removed `[01]/[02]/[03]/[04]` number prefixes from all module headers
+- Planet label now uses plain white (`#ffffff`) matching GEO NODE title style (`8px`, `2.5px` letter-spacing)
+- JS no longer overrides color/shadow with inline styles — CSS handles it cleanly
 
 ---
 

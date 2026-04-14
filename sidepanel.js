@@ -546,6 +546,58 @@
     var scanY = -1.15;
     var currentPlanet = 0;
 
+    // ── Drag-to-rotate state ──
+    var isDragging  = false;
+    var dragStartX  = 0;
+    var dragLastX   = 0;
+    var dragVelocity = 0;  // momentum after release
+
+    globeCanvas.addEventListener('mousedown', function (e) {
+      isDragging  = true;
+      dragStartX  = e.clientX;
+      dragLastX   = e.clientX;
+      dragVelocity = 0;
+      globeCanvas.style.cursor = 'grabbing';
+    });
+
+    window.addEventListener('mousemove', function (e) {
+      if (!isDragging) return;
+      var dx = e.clientX - dragLastX;
+      // Scale drag pixels → radians; canvas width maps to ~2π
+      var sensitivity = (2 * Math.PI) / (globeCanvas.offsetWidth || 200);
+      rot += dx * sensitivity;
+      dragVelocity = dx * sensitivity;
+      dragLastX = e.clientX;
+    });
+
+    window.addEventListener('mouseup', function () {
+      if (!isDragging) return;
+      isDragging = false;
+      globeCanvas.style.cursor = 'grab';
+    });
+
+    // Touch support
+    globeCanvas.addEventListener('touchstart', function (e) {
+      isDragging  = true;
+      dragLastX   = e.touches[0].clientX;
+      dragVelocity = 0;
+    }, { passive: true });
+
+    globeCanvas.addEventListener('touchmove', function (e) {
+      if (!isDragging) return;
+      var dx = e.touches[0].clientX - dragLastX;
+      var sensitivity = (2 * Math.PI) / (globeCanvas.offsetWidth || 200);
+      rot += dx * sensitivity;
+      dragVelocity = dx * sensitivity;
+      dragLastX = e.touches[0].clientX;
+    }, { passive: true });
+
+    globeCanvas.addEventListener('touchend', function () {
+      isDragging = false;
+    });
+
+    globeCanvas.style.cursor = 'grab';
+
     function resize() {
       globeCanvas.width  = globeCanvas.offsetWidth;
       globeCanvas.height = globeCanvas.offsetHeight;
@@ -573,10 +625,9 @@
     function applyPlanetLabel(pl) {
       var labelEl = document.getElementById('cp-planet-label');
       if (!labelEl) return;
-      labelEl.textContent = pl.name;
-      var rc = 'rgba(' + pl.r[0] + ',' + pl.r[1] + ',' + pl.r[2] + ',';
-      labelEl.style.color     = rc + '0.75)';
-      labelEl.style.textShadow = '0 0 6px ' + rc + '0.45)';
+      labelEl.textContent      = pl.name;
+      labelEl.style.color      = '';
+      labelEl.style.textShadow = '';
     }
     applyPlanetLabel(PLANETS[0]); // init label
 
@@ -600,7 +651,7 @@
         if (i === 0) ctx.moveTo(p.sx, p.sy); else ctx.lineTo(p.sx, p.sy);
       });
       ctx.closePath();
-      ctx.fillStyle = 'rgba(' + landRgb[0] + ',' + landRgb[1] + ',' + landRgb[2] + ',0.38)';
+      ctx.fillStyle = 'rgba(' + landRgb[0] + ',' + landRgb[1] + ',' + landRgb[2] + ',0.75)';
       ctx.fill();
       for (var i = 0; i < pp.length - 1; i++) {
         var a = pp[i], b = pp[i + 1];
@@ -657,7 +708,7 @@
             ctx.lineTo(cx + bpts1[k].x * r, cy + bpts1[k].y * r);
           }
           ctx.closePath();
-          var bAlpha = (bi % 2 === 0) ? 0.28 : 0.14;
+          var bAlpha = (bi % 2 === 0) ? 0.60 : 0.30;
           ctx.fillStyle = 'rgba(' + pl.land[0] + ',' + pl.land[1] + ',' + pl.land[2] + ',' + bAlpha + ')';
           ctx.fill();
         }
@@ -891,7 +942,7 @@
       // ── Atmosphere halo ──
       var atmo = ctx.createRadialGradient(cx, cy, r * 0.88, cx, cy, r * 1.45);
       atmo.addColorStop(0,   'rgba(' + pl.r[0] + ',' + pl.r[1] + ',' + pl.r[2] + ',0.0)');
-      atmo.addColorStop(0.35,'rgba(' + pl.r[0] + ',' + pl.r[1] + ',' + pl.r[2] + ',0.18)');
+      atmo.addColorStop(0.35,'rgba(' + pl.r[0] + ',' + pl.r[1] + ',' + pl.r[2] + ',0.45)');
       atmo.addColorStop(1,   'rgba(' + pl.sd[0] + ',' + pl.sd[1] + ',' + pl.sd[2] + ',0.0)');
       ctx.beginPath();
       ctx.arc(cx, cy, r * 1.45, 0, Math.PI * 2);
@@ -917,7 +968,7 @@
       // Ocean tint
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(' + pl.ocean[0] + ',' + pl.ocean[1] + ',' + pl.ocean[2] + ',0.30)';
+      ctx.fillStyle = 'rgba(' + pl.ocean[0] + ',' + pl.ocean[1] + ',' + pl.ocean[2] + ',0.65)';
       ctx.fill();
 
       // Terrain
@@ -935,8 +986,8 @@
             else ctx.lineTo(cx + p.x * r, cy + p.y * r);
           }
           ctx.closePath();
-          ctx.fillStyle   = 'rgba(' + pl.polar[0] + ',' + pl.polar[1] + ',' + pl.polar[2] + ',0.22)';
-          ctx.strokeStyle = 'rgba(' + pl.polLine[0] + ',' + pl.polLine[1] + ',' + pl.polLine[2] + ',0.45)';
+          ctx.fillStyle   = 'rgba(' + pl.polar[0] + ',' + pl.polar[1] + ',' + pl.polar[2] + ',0.55)';
+          ctx.strokeStyle = 'rgba(' + pl.polLine[0] + ',' + pl.polLine[1] + ',' + pl.polLine[2] + ',0.80)';
           ctx.lineWidth = 0.6;
           ctx.fill();
           ctx.stroke();
@@ -947,15 +998,15 @@
       for (var lat = -60; lat <= 60; lat += 30) {
         var gpts = [];
         for (var lo = 0; lo <= 360; lo += 4) gpts.push(proj(lat, lo));
-        gridSegs(ctx, cx, cy, r, gpts, 0.16, pl.grid);
+        gridSegs(ctx, cx, cy, r, gpts, 0.35, pl.grid);
       }
       var eqPts = [];
       for (var elo = 0; elo <= 360; elo += 3) eqPts.push(proj(0, elo));
-      gridSegs(ctx, cx, cy, r, eqPts, 0.38, pl.grid);
+      gridSegs(ctx, cx, cy, r, eqPts, 0.65, pl.grid);
       for (var mlon = 0; mlon < 360; mlon += 30) {
         var mPts = [];
         for (var mla = -90; mla <= 90; mla += 4) mPts.push(proj(mla, mlon));
-        gridSegs(ctx, cx, cy, r, mPts, 0.12, pl.grid);
+        gridSegs(ctx, cx, cy, r, mPts, 0.28, pl.grid);
       }
 
       // CRT scanlines inside sphere
@@ -974,7 +1025,7 @@
       var pulseY = cy + scanY * r;
       var pulse  = ctx.createLinearGradient(0, pulseY - 6, 0, pulseY + 6);
       pulse.addColorStop(0,   'rgba(' + pl.scan[0] + ',' + pl.scan[1] + ',' + pl.scan[2] + ',0)');
-      pulse.addColorStop(0.5, 'rgba(' + pl.scan[0] + ',' + pl.scan[1] + ',' + pl.scan[2] + ',0.17)');
+      pulse.addColorStop(0.5, 'rgba(' + pl.scan[0] + ',' + pl.scan[1] + ',' + pl.scan[2] + ',0.40)');
       pulse.addColorStop(1,   'rgba(' + pl.scan[0] + ',' + pl.scan[1] + ',' + pl.scan[2] + ',0)');
       ctx.fillStyle = pulse;
       ctx.fillRect(cx - r, pulseY - 6, r * 2, 12);
@@ -988,7 +1039,7 @@
       // ── Rim glow ──
       var rim = ctx.createRadialGradient(cx, cy, r * 0.90, cx, cy, r * 1.03);
       rim.addColorStop(0, 'rgba(' + pl.rim0[0] + ',' + pl.rim0[1] + ',' + pl.rim0[2] + ',0.0)');
-      rim.addColorStop(1, 'rgba(' + pl.rim1[0] + ',' + pl.rim1[1] + ',' + pl.rim1[2] + ',0.38)');
+      rim.addColorStop(1, 'rgba(' + pl.rim1[0] + ',' + pl.rim1[1] + ',' + pl.rim1[2] + ',0.75)');
       ctx.beginPath();
       ctx.arc(cx, cy, r * 1.03, 0, Math.PI * 2);
       ctx.fillStyle = rim;
@@ -1035,7 +1086,16 @@
         }
       }
 
-      rot += 0.005;
+      if (isDragging) {
+        // No auto-rotation while user is dragging
+      } else if (Math.abs(dragVelocity) > 0.0001) {
+        // Momentum: apply remaining velocity then decay
+        rot += dragVelocity;
+        dragVelocity *= 0.92;
+      } else {
+        // Normal auto-rotation
+        rot += 0.005;
+      }
       moonAngle += 0.012;
       requestAnimationFrame(drawGlobe);
     }
